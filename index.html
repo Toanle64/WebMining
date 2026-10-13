@@ -4,405 +4,209 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verus Termux Miner — One Click</title>
-  <meta name="description" content="Script đào Verus Coin (VRSC) one-click trên Termux. Dễ dùng, có giao diện hướng dẫn rõ ràng.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <meta name="description" content="Script đào Verus Coin (VRSC) one-click trên Termux.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #22d3ee;
-      --primary-2: #a78bfa;
-      --bg: #05080f;
-      --bg2: #0a0f1a;
-      --card: #0d1424;
-      --card-hover: #111b30;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --border: rgba(148,163,184,0.12);
-      --green: #4ade80;
-      --radius: 16px;
+      --primary: #22d3ee; --violet: #8b5cf6; --bg: #05080f; --bg2: #0a0f1a;
+      --card: #0d1424; --text: #f8fafc; --muted: #94a3b8;
+      --border: rgba(148,163,184,0.12); --green: #4ade80; --radius: 16px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.65;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-    .glow {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,211,238,0.15), transparent),
-        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(167,139,250,0.08), transparent),
-        radial-gradient(ellipse 50% 30% at 0% 80%, rgba(34,211,238,0.06), transparent);
-    }
-    .wrap {
-      position: relative; z-index: 1;
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 48px 20px 100px;
-    }
-    header { text-align: center; margin-bottom: 48px; }
-    .logo-wrap {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 80px; height: 80px;
-      border-radius: 22px;
-      background: linear-gradient(145deg, #22d3ee, #7c3aed);
-      box-shadow: 0 16px 48px rgba(34,211,238,0.28), 0 0 0 1px rgba(255,255,255,0.1) inset;
-      margin-bottom: 22px;
-      font-size: 36px; font-weight: 800; color: #fff;
-      letter-spacing: -1px;
-    }
-    header h1 {
-      font-size: clamp(1.75rem, 5vw, 2.25rem);
-      font-weight: 800;
-      letter-spacing: -0.6px;
-      margin-bottom: 10px;
-      background: linear-gradient(90deg, #fff 0%, #a5f3fc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    header .sub {
-      color: var(--muted);
-      font-size: 1.05rem;
-      max-width: 420px;
-      margin: 0 auto 20px;
-    }
-    .pills {
-      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-    }
-    .pill {
-      font-size: 0.75rem; font-weight: 600;
-      padding: 6px 12px; border-radius: 999px;
-      background: rgba(34,211,238,0.1);
-      color: var(--primary);
-      border: 1px solid rgba(34,211,238,0.2);
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 18px;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .card:hover { border-color: rgba(34,211,238,0.2); }
-    .card-title {
-      font-size: 1.1rem; font-weight: 700;
-      margin-bottom: 18px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .card-title .icon {
-      width: 32px; height: 32px;
-      border-radius: 10px;
-      background: rgba(34,211,238,0.12);
-      color: var(--primary);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.95rem; font-weight: 700;
-      flex-shrink: 0;
-    }
-    .feat-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .feat {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-    }
-    .feat strong {
-      display: block;
-      color: var(--primary);
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-      letter-spacing: 0.2px;
-    }
-    .feat span { font-size: 0.88rem; color: var(--muted); }
-    .step {
-      display: flex; gap: 14px;
-      margin-bottom: 22px;
-      align-items: flex-start;
-    }
-    .step:last-child { margin-bottom: 0; }
-    .step-num {
-      min-width: 32px; height: 32px;
-      border-radius: 10px;
-      background: linear-gradient(145deg, rgba(34,211,238,0.2), rgba(167,139,250,0.15));
-      color: var(--primary);
-      font-weight: 700; font-size: 0.9rem;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .step-body strong {
-      display: block; margin-bottom: 4px; font-weight: 600;
-    }
-    .step-body p { color: var(--muted); font-size: 0.92rem; }
-    .code-box {
-      position: relative;
-      background: #060a12;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin-top: 12px;
-      font-family: 'JetBrains Mono', ui-monospace, monospace;
-      font-size: 0.78rem;
-      color: var(--green);
-      line-height: 1.55;
-      overflow-x: auto;
-      word-break: break-all;
-    }
-    .copy-btn {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--border);
-      color: #e2e8f0;
-      padding: 5px 12px;
-      border-radius: 8px;
-      font-size: 0.72rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: Inter, sans-serif;
-      transition: all 0.15s;
-    }
-    .copy-btn:hover {
-      background: var(--primary);
-      color: #0a0f1a;
-      border-color: var(--primary);
-    }
-    .btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%;
-      padding: 15px 20px;
-      border-radius: 12px;
-      font-weight: 600; font-size: 0.98rem;
-      text-decoration: none;
-      border: none; cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      font-family: Inter, sans-serif;
-    }
-    .btn-primary {
-      background: linear-gradient(90deg, #22d3ee, #8b5cf6);
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(34,211,238,0.2);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(34,211,238,0.3);
-    }
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      margin-top: 10px;
-    }
-    .btn-ghost:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-    .link-inline {
-      color: var(--primary);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
-    .link-inline:hover { text-decoration: underline; }
-    .pool-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .pool-table th {
-      text-align: left; color: var(--muted); font-weight: 500;
-      padding: 10px 8px 10px 0; border-bottom: 1px solid var(--border);
-      font-size: 0.8rem;
-    }
-    .pool-table td {
-      padding: 12px 8px 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; min-height: 100vh; }
+    .glow { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,211,238,0.14), transparent),
+        radial-gradient(ellipse 50% 40% at 100% 60%, rgba(139,92,246,0.08), transparent); }
+    .wrap { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 20px 90px; }
+    header { text-align: center; margin-bottom: 40px; }
+    .logo-wrap { display: inline-flex; align-items: center; justify-content: center; width: 76px; height: 76px;
+      border-radius: 20px; background: linear-gradient(145deg, #22d3ee, #7c3aed);
+      box-shadow: 0 14px 40px rgba(34,211,238,0.28); margin-bottom: 18px; font-size: 34px; font-weight: 800; color: #fff; }
+    header h1 { font-size: clamp(1.7rem, 5vw, 2.15rem); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;
+      background: linear-gradient(90deg, #fff, #a5f3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    header .sub { color: var(--muted); font-size: 1.02rem; max-width: 400px; margin: 0 auto 16px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .pill { font-size: 0.72rem; font-weight: 600; padding: 5px 11px; border-radius: 999px;
+      background: rgba(34,211,238,0.1); color: var(--primary); border: 1px solid rgba(34,211,238,0.22); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; margin-bottom: 16px; }
+    .card-title { font-size: 1.08rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .card-title .icon { width: 30px; height: 30px; border-radius: 9px; background: rgba(34,211,238,0.12); color: var(--primary);
+      display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; }
+    .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .feat { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .feat strong { display: block; color: var(--primary); font-size: 0.78rem; margin-bottom: 3px; }
+    .feat span { font-size: 0.86rem; color: var(--muted); }
+    .step { display: flex; gap: 12px; margin-bottom: 20px; align-items: flex-start; }
+    .step-num { min-width: 30px; height: 30px; border-radius: 9px;
+      background: linear-gradient(145deg, rgba(34,211,238,0.2), rgba(139,92,246,0.15)); color: var(--primary);
+      font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-body strong { display: block; margin-bottom: 3px; }
+    .step-body p { color: var(--muted); font-size: 0.9rem; }
+    .code-box { position: relative; background: #060a12; border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem;
+      color: var(--green); line-height: 1.55; overflow-x: auto; word-break: break-all; }
+    .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+      color: #e2e8f0; padding: 4px 10px; border-radius: 7px; font-size: 0.7rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif; }
+    .copy-btn:hover { background: var(--primary); color: #0a0f1a; border-color: var(--primary); }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 18px;
+      border-radius: 12px; font-weight: 600; font-size: 0.96rem; text-decoration: none; border: none; cursor: pointer;
+      font-family: Inter, sans-serif; transition: transform 0.15s, box-shadow 0.15s; }
+    .btn-primary { background: linear-gradient(90deg, #22d3ee, #8b5cf6); color: #fff; box-shadow: 0 8px 22px rgba(34,211,238,0.22); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(34,211,238,0.32); }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .link-inline { color: var(--primary); text-decoration: none; font-size: 0.88rem; font-weight: 500; }
+    .pool-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .pool-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 6px 8px 0; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
+    .pool-table td { padding: 11px 6px 11px 0; border-bottom: 1px solid var(--border); }
     .pool-table tr:last-child td { border-bottom: none; }
-    .tag {
-      display: inline-block;
-      background: rgba(34,211,238,0.12);
-      color: var(--primary);
-      font-size: 0.68rem; font-weight: 600;
-      padding: 2px 8px; border-radius: 6px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-    .note {
-      background: rgba(74,222,128,0.06);
-      border: 1px solid rgba(74,222,128,0.18);
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 0.88rem;
-      color: #86efac;
-      margin-top: 16px;
-    }
-    .warn {
-      background: rgba(251,191,36,0.06);
-      border-color: rgba(251,191,36,0.2);
-      color: #fcd34d;
-    }
-    .note ul { margin: 8px 0 0 18px; }
-    .note li { margin-bottom: 4px; }
-    footer {
-      text-align: center;
-      margin-top: 48px;
-      color: var(--muted);
-      font-size: 0.8rem;
-    }
+    .tag { display: inline-block; background: rgba(34,211,238,0.12); color: var(--primary); font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 5px; margin-left: 5px; }
+    .note { background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.18); border-radius: 12px; padding: 12px 14px; font-size: 0.86rem; color: #86efac; margin-top: 14px; }
+    .warn { background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.2); color: #fcd34d; }
+    .note ul { margin: 6px 0 0 16px; }
+    .note li { margin-bottom: 3px; }
+    footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 0.78rem; }
     footer a { color: var(--primary); text-decoration: none; }
-    @media (max-width: 520px) {
-      .feat-grid { grid-template-columns: 1fr; }
-      .card { padding: 22px; }
-      .wrap { padding-top: 32px; }
-    }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: #0f172a; border: 1px solid var(--primary); color: var(--primary); padding: 10px 20px; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 99; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 520px) { .feat-grid { grid-template-columns: 1fr; } .card { padding: 20px; } }
   </style>
 </head>
 <body>
   <div class="glow"></div>
   <div class="wrap">
-
     <header>
       <div class="logo-wrap">V</div>
       <h1>Verus Termux Miner</h1>
-      <p class="sub">Script one-click đào Verus Coin (VRSC) ngay trên điện thoại Android bằng Termux</p>
+      <p class="sub">Script one-click đào Verus Coin (VRSC) trên Android bằng Termux</p>
       <div class="pills">
         <span class="pill">One-click</span>
-        <span class="pill">Termux</span>
-        <span class="pill">LuckPool · Vipor · Verus.farm</span>
+        <span class="pill">Termux UI mới</span>
+        <span class="pill">Tải file 1 chạm</span>
       </div>
     </header>
 
     <section class="card">
       <div class="card-title"><span class="icon">✦</span> Tính năng</div>
       <div class="feat-grid">
-        <div class="feat"><strong>Tự cài đặt</strong><span>Tự tải ccminer & thư viện cần thiết</span></div>
+        <div class="feat"><strong>Giao diện Termux</strong><span>Banner ASCII + màu + validate ví</span></div>
+        <div class="feat"><strong>Tự cài đặt</strong><span>Tự tải ccminer & thư viện</span></div>
         <div class="feat"><strong>Chọn pool</strong><span>LuckPool, Vipor, Verus.farm</span></div>
-        <div class="feat"><strong>Tùy chỉnh</strong><span>Ví, tên máy, số thread</span></div>
-        <div class="feat"><strong>Gọn nhẹ</strong><span>Chỉ 1 file script duy nhất</span></div>
+        <div class="feat"><strong>Tải 1 chạm</strong><span>File về máy, không mở code GitHub</span></div>
       </div>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">1</span> Cách sử dụng</div>
-
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
           <strong>Cài Termux</strong>
-          <p>Tải từ F-Droid (không dùng bản trên CH Play — bản đó đã cũ).</p>
-          <a class="link-inline" href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener">→ Tải Termux trên F-Droid</a>
+          <p>Tải từ F-Droid (không dùng CH Play).</p>
+          <a class="link-inline" href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener">→ Tải Termux</a>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <strong>Chạy lệnh này trong Termux</strong>
-          <div class="code-box" id="cmd1">pkg install wget -y && wget -O verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x verus.sh && ./verus.sh<button class="copy-btn" type="button" onclick="copyCmd('cmd1')">Copy</button></div>
+          <strong>Cách A — Lệnh một dòng</strong>
+          <div class="code-box" id="cmd1">pkg install wget -y && wget -O verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x verus.sh && ./verus.sh<button type="button" class="copy-btn" onclick="copyText('cmd1')">Copy</button></div>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <strong>Nhập thông tin khi script hỏi</strong>
-          <p>Địa chỉ ví (bắt đầu bằng R) → Tên máy → Số thread → Chọn pool</p>
+          <strong>Cách B — Tải file rồi chạy</strong>
+          <p>Bấm nút bên dưới → file tải về → trong Termux:</p>
+          <div class="code-box" id="cmd2">cd /sdcard/Download && bash verus.sh<button type="button" class="copy-btn" onclick="copyText('cmd2')">Copy</button></div>
         </div>
       </div>
-
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-body">
-          <strong>Bắt đầu đào</strong>
-          <p>Script tự chạy. Nhấn <code style="color:var(--primary)">Ctrl + C</code> để dừng.</p>
+          <strong>Nhập ví · thread · pool → đào</strong>
+          <p>Giao diện màu, kiểm tra địa chỉ ví. <code style="color:var(--primary)">Ctrl+C</code> để dừng.</p>
         </div>
       </div>
-
-      <div class="note">
-        Coin tự động về ví khi đạt min payout. Không cần đăng ký pool.
-      </div>
+      <div class="note">Coin tự về ví khi đạt min payout. Không cần đăng ký pool.</div>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">↓</span> Tải file thủ công</div>
-      <p style="color:var(--muted);font-size:0.92rem;margin-bottom:14px">
-        Nếu không muốn dùng lệnh một dòng, tải file về máy rồi chạy:
+      <div class="card-title"><span class="icon">↓</span> Tải script</div>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:14px">
+        Bấm nút sẽ <strong style="color:#fff">tải file verus.sh về máy ngay</strong> — không mở trang code GitHub.
       </p>
-      <div class="code-box" style="margin-bottom:16px">bash verus.sh</div>
-      <a class="btn btn-primary" href="https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh" download="verus.sh">Tải verus.sh</a>
-      <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">Xem trên GitHub</a>
+      <button type="button" class="btn btn-primary" id="btnDl">⬇ Tải verus.sh ngay</button>
+      <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">Xem mã nguồn trên GitHub</a>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">P</span> Pool hỗ trợ</div>
       <table class="pool-table">
-        <thead>
-          <tr>
-            <th>Pool</th>
-            <th>Phí</th>
-            <th>Min payout</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Pool</th><th>Phí</th><th>Min payout</th></tr></thead>
         <tbody>
-          <tr>
-            <td>LuckPool Asia <span class="tag">Mặc định</span></td>
-            <td>1%</td>
-            <td>0.0001 VRSC</td>
-          </tr>
-          <tr>
-            <td>LuckPool NA</td>
-            <td>1%</td>
-            <td>0.0001 VRSC</td>
-          </tr>
-          <tr>
-            <td>Vipor</td>
-            <td>0.8%</td>
-            <td>0.001 VRSC</td>
-          </tr>
-          <tr>
-            <td>Verus.farm</td>
-            <td>0.3%</td>
-            <td>0.01 VRSC</td>
-          </tr>
+          <tr><td>LuckPool Asia <span class="tag">Mặc định</span></td><td>1%</td><td>0.0001 VRSC</td></tr>
+          <tr><td>LuckPool NA</td><td>1%</td><td>0.0001 VRSC</td></tr>
+          <tr><td>Vipor</td><td>0.8%</td><td>0.001 VRSC</td></tr>
+          <tr><td>Verus.farm</td><td>0.3%</td><td>0.01 VRSC</td></tr>
         </tbody>
       </table>
-      <div class="note" style="margin-top:14px">
-        LuckPool được khuyến nghị cho điện thoại vì min payout rất thấp → dễ nhận coin.
-      </div>
+      <div class="note">LuckPool phù hợp điện thoại vì min payout rất thấp.</div>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">!</span> Lưu ý quan trọng</div>
+      <div class="card-title"><span class="icon">!</span> Lưu ý</div>
       <div class="note warn" style="margin-top:0">
         <ul>
-          <li>Chỉ dùng địa chỉ ví bắt đầu bằng <strong>R</strong> (Verus Mobile / Desktop)</li>
-          <li>Không dùng địa chỉ sàn — coin có thể mất</li>
-          <li>Nên để thread = số nhân CPU trừ 1–2 để máy không bị đơ</li>
-          <li>Máy sẽ nóng — cắm sạc và để nơi thoáng mát</li>
-          <li>Điện thoại nên là Android 64-bit (Android 7+)</li>
+          <li>Chỉ dùng địa chỉ ví bắt đầu bằng <strong>R</strong></li>
+          <li>Không dùng địa chỉ sàn</li>
+          <li>Thread ≈ số nhân CPU trừ 1–2</li>
+          <li>Cắm sạc, để máy mát khi đào lâu</li>
+          <li>Android 64-bit (Android 7+)</li>
         </ul>
       </div>
     </section>
 
     <footer>
-      <p>Verus Termux Miner · One-click script cho cộng đồng</p>
+      <p>Verus Termux Miner · One-click cho cộng đồng</p>
       <p style="margin-top:6px"><a href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
   </div>
-
+  <div class="toast" id="toast">Đã tải verus.sh</div>
   <script>
-    function copyCmd(id) {
-      const el = document.getElementById(id);
-      const text = el.innerText.replace(/Copy$/, '').trim();
-      navigator.clipboard.writeText(text).then(() => {
-        const btn = el.querySelector('.copy-btn');
-        const old = btn.innerText;
+    function downloadScript() {
+      fetch('https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh')
+        .then(function(r) { return r.text(); })
+        .then(function(text) {
+          var blob = new Blob([text], { type: 'application/x-sh' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'verus.sh';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          var t = document.getElementById('toast');
+          t.classList.add('show');
+          setTimeout(function() { t.classList.remove('show'); }, 2000);
+        })
+        .catch(function() {
+          alert('Không tải được. Hãy dùng lệnh wget trong Termux.');
+        });
+    }
+    document.getElementById('btnDl').addEventListener('click', downloadScript);
+    function copyText(id) {
+      var el = document.getElementById(id);
+      var text = el.innerText.replace(/Copy$/i, '').trim();
+      navigator.clipboard.writeText(text).then(function() {
+        var btn = el.querySelector('.copy-btn');
+        if (!btn) return;
+        var old = btn.innerText;
         btn.innerText = 'Copied!';
-        setTimeout(() => { btn.innerText = old; }, 1600);
+        setTimeout(function() { btn.innerText = old; }, 1500);
       });
     }
   </script>
