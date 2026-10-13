@@ -32,14 +32,11 @@ EOF
 
 line() { echo -e "  ${D}────────────────────────────────────${N}"; }
 
-# Quét core: online (Termux thấy) + tổng trong cpuinfo (máy có thể nhiều hơn)
 scan_cores() {
-  local onl conf info max=1
+  local onl conf info max=1 sys=0
   onl=$(nproc 2>/dev/null || true)
   conf=$(getconf _NPROCESSORS_CONF 2>/dev/null || true)
   info=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || true)
-  # online từ sysfs
-  local sys=0
   if [ -d /sys/devices/system/cpu ]; then
     sys=$(ls -d /sys/devices/system/cpu/cpu[0-9]* 2>/dev/null | wc -l)
   fi
@@ -49,34 +46,30 @@ scan_cores() {
       *) [ "$v" -gt "$max" ] && max=$v ;;
     esac
   done
-  # Export để do_config hiện chi tiết
-  SCAN_ONL=${onl:-$max}
+  # Online = core Termux thực dùng được (ưu tiên nproc)
+  case "$onl" in ''|*[!0-9]*) SCAN_ONL=$max ;; *) SCAN_ONL=$onl ;; esac
   SCAN_TOTAL=$max
-  echo "$max"
+  echo "$SCAN_ONL"
 }
 
 fix_libs() {
-  echo -e "  ${C}▸${N} Đồng bộ thư viện Termux (openssl + libcurl)..."
+  echo -e "  ${C}▸${N} Đồng bộ openssl + libcurl..."
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -y >/dev/null 2>&1
-  apt-get install -y --reinstall openssl libcurl libjansson 2>/dev/null || \
-    pkg install -y openssl libcurl libjansson 2>/dev/null
+  apt-get install -y --reinstall openssl libcurl libjansson 2>/dev/null || pkg install -y openssl libcurl libjansson 2>/dev/null
   pkg upgrade -y openssl libcurl 2>/dev/null || true
-  echo -e "  ${G}✓${N} Đã thử sửa thư viện"
+  echo -e "  ${G}✓${N} Xong"
 }
 
 test_ccminer() {
   [ -x "$DIR/ccminer" ] || return 1
-  local out
-  out=$("$DIR/ccminer" --help 2>&1)
-  if echo "$out" | grep -qi 'CANNOT LINK\|not found.*lib'; then
-    return 2
-  fi
+  local out; out=$("$DIR/ccminer" --help 2>&1)
+  echo "$out" | grep -qi 'CANNOT LINK\|not found.*lib' && return 2
   return 0
 }
 
 compile_miner() {
-  echo -e "  ${C}▸${N} Biên dịch ccminer (~5–15 phút)..."
+  echo -e "  ${C}▸${N} Biên dịch ccminer..."
   pkg install -y libjansson build-essential clang binutils git wget >/dev/null 2>&1
   mkdir -p "$PREFIX/include/sys" 2>/dev/null
   [ -f "$PREFIX/include/linux/sysctl.h" ] && cp -n "$PREFIX/include/linux/sysctl.h" "$PREFIX/include/sys/" 2>/dev/null
@@ -86,30 +79,25 @@ compile_miner() {
   chmod +x build.sh configure.sh autogen.sh 2>/dev/null
   CXX=clang++ CC=clang ./build.sh 2>&1 | tail -15
   if [ -f "$DIR/src/ccminer" ]; then
-    cp "$DIR/src/ccminer" "$DIR/ccminer"
-    chmod +x "$DIR/ccminer"
+    cp "$DIR/src/ccminer" "$DIR/ccminer"; chmod +x "$DIR/ccminer"
     cd "$DIR" || true
-    test_ccminer && { echo -e "  ${G}✓${N} Biên dịch OK"; return 0; }
+    test_ccminer && { echo -e "  ${G}✓${N} OK"; return 0; }
   fi
-  cd "$DIR" || true
-  echo -e "  ${R}✗ Biên dịch thất bại${N}"
-  return 1
+  cd "$DIR" || true; return 1
 }
 
 install_miner() {
   local FORCE="${1:-0}"
   pkg install -y libjansson wget curl openssl >/dev/null 2>&1
   if [ "$FORCE" = "1" ] || [ ! -f "$DIR/ccminer" ]; then
-    echo -e "  ${C}▸${N} Tải miner prebuilt..."
+    echo -e "  ${C}▸${N} Tải miner..."
     rm -f "$DIR/ccminer" "$DIR/ccminer.tmp"
     for U in \
       "https://raw.githubusercontent.com/Darktron/pre-compiled/generic/ccminer" \
       "https://cdn.jsdelivr.net/gh/Darktron/pre-compiled@generic/ccminer"
     do
       if wget -q --timeout=45 --tries=3 -O "$DIR/ccminer.tmp" "$U" 2>/dev/null && [ -s "$DIR/ccminer.tmp" ]; then
-        mv "$DIR/ccminer.tmp" "$DIR/ccminer"
-        chmod +x "$DIR/ccminer"
-        break
+        mv "$DIR/ccminer.tmp" "$DIR/ccminer"; chmod +x "$DIR/ccminer"; break
       fi
     done
     rm -f "$DIR/ccminer.tmp"
@@ -117,13 +105,7 @@ install_miner() {
   test_ccminer
   case $? in
     0) echo -e "  ${G}✓${N} Miner OK"; return 0 ;;
-    2)
-      echo -e "  ${Y}⚠ Lỗi lib. Đang sửa...${N}"
-      fix_libs
-      test_ccminer && return 0
-      compile_miner && return 0
-      return 1
-      ;;
+    2) fix_libs; test_ccminer && return 0; compile_miner && return 0; return 1 ;;
     *) [ -f "$DIR/ccminer" ] && return 0; return 1 ;;
   esac
 }
@@ -154,16 +136,20 @@ do_config() {
   echo -e "  ${W}${B}CẤU HÌNH NOVA${N}"
   line
 
-  CORES=$(scan_cores)
-  ONL=${SCAN_ONL:-$CORES}
-  TOTAL=${SCAN_TOTAL:-$CORES}
-  DEF=$((ONL > 2 ? ONL - 1 : ONL))
-  echo -e "  ${C}▸${N} CPU Termux thấy (online): ${W}${ONL}${N}"
-  if [ "$TOTAL" -gt "$ONL" ] 2>/dev/null; then
-    echo -e "  ${C}▸${N} Máy khai báo (cpuinfo/sys): ${W}${TOTAL}${N}  ${Y}← cloud phone hay cắt bớt${N}"
+  ONL=$(scan_cores)
+  TOTAL=${SCAN_TOTAL:-$ONL}
+  # Mặc định khi Enter trống = max core online − 1
+  if [ "$ONL" -gt 1 ] 2>/dev/null; then
+    DEF=$((ONL - 1))
+  else
+    DEF=1
   fi
-  echo -e "  ${D}Gợi ý thread: ${DEF} (bằng online−1). Có thể gõ ${TOTAL} hoặc 8 nếu muốn thử.${N}"
-  echo -e "  ${D}Thread > online có thể không tăng hashrate (OS không giao core).${N}"
+
+  echo -e "  ${C}▸${N} Core online (Termux): ${W}${ONL}${N}  → mặc định thread: ${W}${DEF}${N} ${D}(= max − 1)${N}"
+  if [ "$TOTAL" -gt "$ONL" ] 2>/dev/null; then
+    echo -e "  ${D}Máy khai báo ${TOTAL} core nhưng Termux chỉ dùng được ${ONL}${N}"
+  fi
+  echo -e "  ${D}Chỉ Enter = dùng ${DEF}. Muốn khác thì gõ số.${N}"
   echo
 
   echo -e "  ${C}0.${N} Chế độ: ${W}1${N} Pool  ${W}2${N} Hybrid  ${W}3${N} Solo"
@@ -181,8 +167,9 @@ do_config() {
   echo -ne "  ${C}2.${N} Tên máy ${D}[phone1]${N}: "
   read -r WORKER; WORKER=${WORKER:-phone1}
 
-  echo -ne "  ${C}3.${N} Thread ${D}[gợi ý ${DEF}, có thể gõ 8]${N}: "
-  read -r THREADS; THREADS=${THREADS:-$DEF}
+  echo -ne "  ${C}3.${N} Thread ${D}[Enter = max−1 → ${DEF}]${N}: "
+  read -r THREADS
+  THREADS=${THREADS:-$DEF}
 
   PRIMARY=""; PNAME=""
   case $MODE in
@@ -255,75 +242,46 @@ CORES=$ONL
 EOL
 
   echo
-  echo -e "  ${G}✓ Đã lưu${N}  ${W}$PNAME${N}  t=${W}$THREADS${N}"
+  echo -e "  ${G}✓ Đã lưu${N}  ${W}$PNAME${N}  t=${W}$THREADS${N} ${D}(max online ${ONL} − 1 mặc định)${N}"
   echo -ne "  Enter..."; read -r _
 }
 
 show_stats() {
   banner
-  echo -e "  ${W}${B}THỐNG KÊ LUCKPOOL${N}"
-  line
-  if [ ! -f "$META" ]; then
-    echo -e "  ${Y}Chưa cấu hình.${N}"
-    echo -ne "  Enter..."; read -r _; return
-  fi
+  if [ ! -f "$META" ]; then echo -e "  ${Y}Chưa cấu hình.${N}"; echo -ne "  Enter..."; read -r _; return; fi
   source "$META"
   JSON=$(curl -sL --max-time 15 --retry 2 "https://luckpool.net/verus/miner/${WALLET}" 2>/dev/null)
   if [ -z "$JSON" ] || ! echo "$JSON" | grep -q hashrate; then
-    echo -e "  ${Y}Chưa có dữ liệu.${N}"
-    echo -ne "  Enter..."; read -r _; return
+    echo -e "  ${Y}Chưa có dữ liệu.${N}"; echo -ne "  Enter..."; read -r _; return
   fi
   PY=$(command -v python3 || command -v python || true)
-  if [ -n "$PY" ]; then
-    echo "$JSON" | $PY -c "
-import sys,json
-d=json.load(sys.stdin)
-print('  Hashrate:', d.get('hashrateString','?'))
-print('  Balance :', d.get('balance',0), 'VRSC')
-print('  Paid    :', d.get('paid',0), 'VRSC')
-"
-  fi
+  [ -n "$PY" ] && echo "$JSON" | $PY -c "import sys,json;d=json.load(sys.stdin);print('Hashrate',d.get('hashrateString'));print('Balance',d.get('balance'),'VRSC');print('Paid',d.get('paid'),'VRSC')"
   echo -ne "  Enter..."; read -r _
 }
 
 start_mine() {
   banner
-  if [ ! -f "$CFG" ]; then
-    echo -e "  ${Y}Chưa config.${N}"; sleep 1; do_config
-  fi
+  if [ ! -f "$CFG" ]; then echo -e "  ${Y}Chưa config.${N}"; sleep 1; do_config; fi
   [ -f "$META" ] && source "$META"
   install_miner 0 || { echo -ne "  Enter..."; read -r _; return; }
-  test_ccminer
-  if [ $? = 2 ]; then
-    echo -e "  ${R}Lỗi thư viện — menu 4 hoặc apt full-upgrade.${N}"
-    echo -ne "  Enter..."; read -r _; return
-  fi
+  test_ccminer; [ $? = 2 ] && { echo -e "  ${R}Lỗi lib — menu 4${N}"; echo -ne "  Enter..."; read -r _; return; }
   echo -e "${C}┌──────────────────────────────────────────┐${N}"
-  echo -e "${C}│${N} ${W}${B}NOVA LOG${N}  ${D}Ctrl+C = dừng${N}"
+  echo -e "${C}│${N} ${W}${B}NOVA LOG${N}  ${D}Ctrl+C dừng${N}"
   echo -e "${C}│${N} ${PNAME:-?} · t=${THREADS:-?}"
   echo -e "${C}└──────────────────────────────────────────┘${N}"
   cd "$DIR" || exit 1
   FAIL=0
   while true; do
     ./ccminer -c config.json 2>&1 | while IFS= read -r line; do
-      if echo "$line" | grep -qi 'CANNOT LINK'; then
-        echo -e "  ${R}│ $line${N}"
-        echo -e "  ${R}Dừng. Sửa lib rồi menu 4.${N}"
-        exit 99
-      elif echo "$line" | grep -qiE 'H/s|MH/s|accepted|yes!'; then
-        echo -e "  ${G}│${N} $line"
-      elif echo "$line" | grep -qiE 'error|reject|fail|timed out|disconnect'; then
-        echo -e "  ${R}│${N} $line"
-      else
-        echo -e "  ${D}│${N} $line"
-      fi
+      if echo "$line" | grep -qi 'CANNOT LINK'; then echo -e "  ${R}│ $line${N}"; exit 99
+      elif echo "$line" | grep -qiE 'H/s|MH/s|accepted|yes!'; then echo -e "  ${G}│${N} $line"
+      elif echo "$line" | grep -qiE 'error|reject|fail|timed out|disconnect'; then echo -e "  ${R}│${N} $line"
+      else echo -e "  ${D}│${N} $line"; fi
     done
     EXIT=${PIPESTATUS[0]}
     [ "$EXIT" = "130" ] || [ "$EXIT" = "143" ] || [ "$EXIT" = "99" ] && break
-    FAIL=$((FAIL+1))
-    [ "$FAIL" -ge 5 ] && break
-    echo -e "  ${Y}│ Thử lại 5s ($FAIL/5)${N}"
-    sleep 5 || break
+    FAIL=$((FAIL+1)); [ "$FAIL" -ge 5 ] && break
+    echo -e "  ${Y}│ Retry 5s ($FAIL/5)${N}"; sleep 5 || break
   done
   echo -ne "  Enter..."; read -r _
 }
@@ -331,12 +289,9 @@ start_mine() {
 main_menu() {
   while true; do
     banner
-    CORES=$(scan_cores)
-    echo -e "  ${D}CPU online: ${SCAN_ONL:-$CORES} · tổng quét: ${SCAN_TOTAL:-$CORES}${N}"
-    if [ -f "$META" ]; then
-      source "$META"
-      echo -e "  ${D}${PNAME:-?} · t=${THREADS}${N}"
-    fi
+    ONL=$(scan_cores)
+    echo -e "  ${D}CPU online: ${ONL} · mặc định thread: $((ONL>1?ONL-1:1)) (= max−1)${N}"
+    [ -f "$META" ] && source "$META" && echo -e "  ${D}${PNAME:-?} · t=${THREADS}${N}"
     line
     echo
     echo -e "  ${W}${B}MENU${N}"
