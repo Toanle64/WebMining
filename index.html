@@ -8,255 +8,277 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #f59e0b;
-      --primary-soft: #fbbf24;
-      --accent: #ea580c;
-      --bg: #1a1410;
-      --bg2: #241c16;
-      --card: #2a211a;
-      --text: #faf6f1;
-      --muted: #c4b5a5;
-      --border: rgba(251, 191, 36, 0.12);
-      --green: #86efac;
-      --radius: 16px;
+      --primary: #38bdf8;
+      --primary-2: #a78bfa;
+      --warm: #fbbf24;
+      --bg: #0b0d12;
+      --bg2: #12151c;
+      --card: #161a22;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.1);
+      --green: #6ee7b7;
+      --radius: 20px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.65;
+      line-height: 1.7;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
     .glow {
       position: fixed; inset: 0; pointer-events: none; z-index: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 50% -15%, rgba(245, 158, 11, 0.18), transparent),
-        radial-gradient(ellipse 50% 40% at 100% 70%, rgba(234, 88, 12, 0.1), transparent),
-        radial-gradient(ellipse 40% 30% at 0% 80%, rgba(251, 191, 36, 0.06), transparent);
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(56, 189, 248, 0.1), transparent 55%),
+        radial-gradient(ellipse 45% 35% at 90% 60%, rgba(167, 139, 250, 0.07), transparent),
+        radial-gradient(ellipse 40% 30% at 10% 85%, rgba(251, 191, 36, 0.04), transparent);
     }
     .wrap {
       position: relative; z-index: 1;
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto;
-      padding: 40px 20px 90px;
+      padding: 48px 22px 100px;
     }
-    header { text-align: center; margin-bottom: 40px; }
+    header { text-align: center; margin-bottom: 36px; }
     .logo-wrap {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 76px; height: 76px;
-      border-radius: 20px;
-      background: linear-gradient(145deg, #f59e0b, #ea580c);
-      box-shadow: 0 14px 40px rgba(245, 158, 11, 0.35);
-      margin-bottom: 18px;
-      font-size: 28px; font-weight: 800; color: #1a1410;
-      letter-spacing: -0.5px;
+      width: 72px; height: 72px;
+      border-radius: 22px;
+      background: linear-gradient(145deg, #38bdf8 0%, #818cf8 55%, #c4b5fd 100%);
+      box-shadow: 0 12px 36px rgba(56, 189, 248, 0.22);
+      margin-bottom: 20px;
+      font-size: 26px; font-weight: 800; color: #0b0d12;
     }
     header h1 {
-      font-size: clamp(1.7rem, 5vw, 2.15rem);
+      font-size: clamp(1.65rem, 4.5vw, 2rem);
       font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
-      background: linear-gradient(90deg, #fff7ed, #fbbf24);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      letter-spacing: -0.4px;
+      margin-bottom: 10px;
+      color: #f8fafc;
     }
     header .sub {
       color: var(--muted);
-      font-size: 1.02rem;
-      max-width: 420px;
-      margin: 0 auto 16px;
+      font-size: 0.98rem;
+      max-width: 380px;
+      margin: 0 auto 18px;
+      font-weight: 400;
     }
     .pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .pill {
-      font-size: 0.72rem; font-weight: 600;
-      padding: 5px 11px; border-radius: 999px;
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--primary-soft);
-      border: 1px solid rgba(245, 158, 11, 0.25);
+      font-size: 0.7rem; font-weight: 600;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 26px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+      padding: 26px 24px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+      transition: border-color 0.25s ease;
     }
+    .card:hover { border-color: rgba(148, 163, 184, 0.16); }
     .card-title {
-      font-size: 1.08rem; font-weight: 700;
+      font-size: 1.02rem; font-weight: 650;
       margin-bottom: 16px;
       display: flex; align-items: center; gap: 10px;
+      letter-spacing: -0.2px;
     }
     .card-title .icon {
-      width: 30px; height: 30px;
-      border-radius: 9px;
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--primary-soft);
+      width: 28px; height: 28px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; font-weight: 700;
+      font-size: 0.82rem; font-weight: 700;
     }
     .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .feat {
       background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 14px;
+      padding: 14px 15px;
     }
     .feat strong {
       display: block;
-      color: var(--primary-soft);
-      font-size: 0.78rem;
-      margin-bottom: 3px;
+      color: #7dd3fc;
+      font-size: 0.76rem;
+      font-weight: 600;
+      margin-bottom: 4px;
     }
-    .feat span { font-size: 0.86rem; color: var(--muted); }
-    .mode-list { display: flex; flex-direction: column; gap: 12px; }
+    .feat span { font-size: 0.84rem; color: var(--muted); }
+    .mode-list { display: flex; flex-direction: column; gap: 10px; }
     .mode-item {
       background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 14px;
       padding: 14px 16px;
     }
-    .mode-item strong { color: var(--primary-soft); display: block; margin-bottom: 4px; }
-    .mode-item p { color: var(--muted); font-size: 0.88rem; margin: 0; }
-    .step { display: flex; gap: 12px; margin-bottom: 20px; align-items: flex-start; }
+    .mode-item strong {
+      color: #e2e8f0;
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .mode-item p { color: var(--muted); font-size: 0.86rem; margin: 0; }
+    .step {
+      display: flex; gap: 14px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+    }
+    .step:last-of-type { margin-bottom: 0; }
     .step-num {
-      min-width: 30px; height: 30px;
-      border-radius: 9px;
-      background: linear-gradient(145deg, rgba(245, 158, 11, 0.25), rgba(234, 88, 12, 0.2));
-      color: var(--primary-soft);
-      font-weight: 700; font-size: 0.88rem;
+      min-width: 28px; height: 28px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      font-weight: 700; font-size: 0.82rem;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .step-body strong { display: block; margin-bottom: 3px; }
-    .step-body p { color: var(--muted); font-size: 0.9rem; }
+    .step-body strong {
+      display: block;
+      margin-bottom: 3px;
+      font-weight: 600;
+      font-size: 0.94rem;
+    }
+    .step-body p { color: var(--muted); font-size: 0.88rem; }
     .code-box {
       position: relative;
-      background: #15110d;
-      border: 1px solid var(--border);
-      border-radius: 12px;
+      background: #0e1117;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
       padding: 14px 16px;
       margin-top: 10px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
-      color: #fcd34d;
-      line-height: 1.55;
+      font-size: 0.74rem;
+      color: var(--green);
+      line-height: 1.6;
       overflow-x: auto;
       word-break: break-all;
     }
     .copy-btn {
       position: absolute; top: 8px; right: 8px;
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: #fef3c7;
-      padding: 4px 10px;
-      border-radius: 7px;
-      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      color: #cbd5e1;
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 0.68rem;
       font-weight: 600;
       cursor: pointer;
       font-family: Inter, sans-serif;
+      transition: background 0.2s;
     }
     .copy-btn:hover {
-      background: var(--primary);
-      color: #1a1410;
-      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.25);
+      color: #e0f2fe;
     }
     .btn {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       width: 100%;
       padding: 14px 18px;
-      border-radius: 12px;
-      font-weight: 600; font-size: 0.96rem;
+      border-radius: 14px;
+      font-weight: 600; font-size: 0.94rem;
       text-decoration: none;
       border: none; cursor: pointer;
       font-family: Inter, sans-serif;
-      transition: transform 0.15s, box-shadow 0.15s;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s;
     }
     .btn-primary {
-      background: linear-gradient(90deg, #f59e0b, #ea580c);
-      color: #1a1410;
-      box-shadow: 0 8px 22px rgba(245, 158, 11, 0.3);
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      color: #0b0d12;
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
     }
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(245, 158, 11, 0.4);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 28px rgba(56, 189, 248, 0.28);
     }
     .btn-ghost {
       background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
       margin-top: 10px;
     }
     .btn-ghost:hover {
-      border-color: var(--primary);
-      color: var(--primary-soft);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: var(--primary);
     }
     .link-inline {
-      color: var(--primary-soft);
+      color: var(--primary);
       text-decoration: none;
       font-size: 0.88rem;
       font-weight: 500;
     }
-    .pool-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .pool-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
     .pool-table th {
       text-align: left; color: var(--muted); font-weight: 500;
-      padding: 8px 6px 8px 0; border-bottom: 1px solid var(--border);
-      font-size: 0.78rem;
+      padding: 8px 6px 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.75rem;
     }
     .pool-table td {
-      padding: 11px 6px 11px 0;
-      border-bottom: 1px solid var(--border);
+      padding: 12px 6px 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #e2e8f0;
     }
     .pool-table tr:last-child td { border-bottom: none; }
     .tag {
       display: inline-block;
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--primary-soft);
-      font-size: 0.65rem; font-weight: 600;
-      padding: 2px 7px; border-radius: 5px;
-      margin-left: 5px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      font-size: 0.62rem; font-weight: 600;
+      padding: 2px 8px; border-radius: 6px;
+      margin-left: 6px;
     }
     .note {
-      background: rgba(134, 239, 172, 0.08);
-      border: 1px solid rgba(134, 239, 172, 0.2);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 0.86rem;
-      color: #bbf7d0;
+      background: rgba(110, 231, 183, 0.06);
+      border: 1px solid rgba(110, 231, 183, 0.14);
+      border-radius: 14px;
+      padding: 13px 15px;
+      font-size: 0.85rem;
+      color: #a7f3d0;
       margin-top: 14px;
     }
     .warn {
-      background: rgba(251, 191, 36, 0.1);
-      border-color: rgba(251, 191, 36, 0.25);
+      background: rgba(251, 191, 36, 0.06);
+      border-color: rgba(251, 191, 36, 0.14);
       color: #fde68a;
     }
     .note ul { margin: 6px 0 0 16px; }
-    .note li { margin-bottom: 3px; }
+    .note li { margin-bottom: 4px; }
     footer {
       text-align: center;
-      margin-top: 40px;
-      color: var(--muted);
-      font-size: 0.78rem;
+      margin-top: 44px;
+      color: #64748b;
+      font-size: 0.76rem;
     }
-    footer a { color: var(--primary-soft); text-decoration: none; }
+    footer a { color: var(--primary); text-decoration: none; }
     .toast {
-      position: fixed; bottom: 24px; left: 50%;
+      position: fixed; bottom: 28px; left: 50%;
       transform: translateX(-50%) translateY(80px);
-      background: #2a211a;
-      border: 1px solid var(--primary);
-      color: var(--primary-soft);
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 0.85rem; font-weight: 600;
-      opacity: 0; transition: all 0.3s; z-index: 99;
+      background: var(--card);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #7dd3fc;
+      padding: 11px 22px;
+      border-radius: 12px;
+      font-size: 0.84rem; font-weight: 600;
+      opacity: 0; transition: all 0.35s ease; z-index: 99;
       pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     @media (max-width: 520px) {
       .feat-grid { grid-template-columns: 1fr; }
-      .card { padding: 20px; }
+      .card { padding: 20px 18px; }
+      .wrap { padding-top: 36px; }
     }
   </style>
 </head>
@@ -266,11 +288,11 @@
     <header>
       <div class="logo-wrap">N</div>
       <h1>NOVA Miner</h1>
-      <p class="sub">Đào Verus (VRSC) trên Termux — Pool · Hybrid · Solo</p>
+      <p class="sub">Đào Verus (VRSC) trên Termux — gọn, êm, một chạm</p>
       <div class="pills">
-        <span class="pill">Pool share</span>
+        <span class="pill">Pool</span>
         <span class="pill">Hybrid Solo</span>
-        <span class="pill">Auto-retry 5s</span>
+        <span class="pill">Retry 5s</span>
       </div>
     </header>
 
@@ -278,15 +300,15 @@
       <div class="card-title"><span class="icon">0</span> Chế độ đào</div>
       <div class="mode-list">
         <div class="mode-item">
-          <strong>1 · Pool (share hashrate)</strong>
-          <p>Chia hashrate với pool → coin đều. Min payout thấp. <b style="color:#fff7ed">Khuyên dùng trên điện thoại.</b></p>
+          <strong>1 · Pool (share)</strong>
+          <p>Chia hashrate → coin đều. Min payout thấp. <b style="color:#f1f5f9">Khuyên dùng trên phone.</b></p>
         </div>
         <div class="mode-item">
-          <strong>2 · Hybrid Solo (LuckPool)</strong>
-          <p>Tìm block → ~75% thưởng; vẫn nhận share. Password: <code style="color:var(--primary-soft)">x,hybrid</code></p>
+          <strong>2 · Hybrid Solo</strong>
+          <p>Tìm block → ~75% thưởng + vẫn nhận share. Pass: <code style="color:var(--primary)">x,hybrid</code></p>
         </div>
         <div class="mode-item">
-          <strong>3 · Solo (Vipor)</strong>
+          <strong>3 · Solo Vipor</strong>
           <p>Chỉ nhận khi tìm full block — trên phone khá hiếm.</p>
         </div>
       </div>
@@ -296,14 +318,14 @@
       <div class="card-title"><span class="icon">✦</span> Tính năng</div>
       <div class="feat-grid">
         <div class="feat"><strong>3 chế độ</strong><span>Pool / Hybrid / Solo</span></div>
-        <div class="feat"><strong>Failover pool</strong><span>Tự đổi pool khi rớt</span></div>
-        <div class="feat"><strong>Retry 5s</strong><span>Tự chạy lại khi mất kết nối</span></div>
-        <div class="feat"><strong>Miner mới</strong><span>Darktron ARMv8 tối ưu</span></div>
+        <div class="feat"><strong>Failover</strong><span>Tự đổi pool khi rớt</span></div>
+        <div class="feat"><strong>Retry 5s</strong><span>Tự chạy lại</span></div>
+        <div class="feat"><strong>Miner mới</strong><span>Darktron ARMv8</span></div>
       </div>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">1</span> Cách sử dụng</div>
+      <div class="card-title"><span class="icon">1</span> Cách dùng</div>
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
@@ -315,36 +337,36 @@
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <strong>Chạy lệnh một dòng</strong>
+          <strong>Lệnh một dòng</strong>
           <div class="code-box" id="cmd1">pkg install wget -y && wget -O verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x verus.sh && ./verus.sh<button type="button" class="copy-btn" onclick="copyText('cmd1')">Copy</button></div>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <strong>Menu: cấu hình → đào → xem số dư</strong>
-          <p>Có cập nhật miner (menu 4). <code style="color:var(--primary-soft)">Ctrl+C</code> dừng về menu.</p>
+          <strong>Menu → cấu hình → đào</strong>
+          <p>Menu 4 cập nhật miner. <code style="color:var(--primary)">Ctrl+C</code> dừng về menu.</p>
         </div>
       </div>
-      <div class="note">Pool: coin tự về ví khi đạt min payout. Không cần đăng ký.</div>
+      <div class="note">Coin tự về ví khi đạt min payout. Không cần đăng ký pool.</div>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">↓</span> Tải script</div>
-      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:14px">Tải file về máy — không mở trang code GitHub.</p>
-      <button type="button" class="btn btn-primary" id="btnDl">⬇ Tải verus.sh ngay</button>
-      <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">Xem mã nguồn trên GitHub</a>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:14px">Tải file về máy, không mở trang code.</p>
+      <button type="button" class="btn btn-primary" id="btnDl">Tải verus.sh</button>
+      <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">P</span> Pool (mode 1)</div>
+      <div class="card-title"><span class="icon">P</span> Pool</div>
       <table class="pool-table">
-        <thead><tr><th>Pool</th><th>Phí</th><th>Min payout</th></tr></thead>
+        <thead><tr><th>Pool</th><th>Phí</th><th>Min</th></tr></thead>
         <tbody>
-          <tr><td>LuckPool Asia <span class="tag">Mặc định</span></td><td>1%</td><td>0.0001 VRSC</td></tr>
-          <tr><td>LuckPool NA</td><td>1%</td><td>0.0001 VRSC</td></tr>
-          <tr><td>Vipor (5040)</td><td>0.8%</td><td>0.001 VRSC</td></tr>
-          <tr><td>Verus.farm</td><td>0.3%</td><td>0.01 VRSC</td></tr>
+          <tr><td>LuckPool Asia <span class="tag">Default</span></td><td>1%</td><td>0.0001</td></tr>
+          <tr><td>LuckPool NA</td><td>1%</td><td>0.0001</td></tr>
+          <tr><td>Vipor</td><td>0.8%</td><td>0.001</td></tr>
+          <tr><td>Verus.farm</td><td>0.3%</td><td>0.01</td></tr>
         </tbody>
       </table>
     </section>
@@ -353,16 +375,16 @@
       <div class="card-title"><span class="icon">!</span> Lưu ý</div>
       <div class="note warn" style="margin-top:0">
         <ul>
-          <li>Điện thoại: ưu tiên <strong>Pool (1)</strong></li>
-          <li>Chỉ dùng ví bắt đầu bằng <strong>R</strong></li>
-          <li>Thread ≈ số nhân CPU trừ 1–2</li>
-          <li>Cắm sạc, để máy mát khi đào lâu</li>
+          <li>Phone: ưu tiên <strong>Pool (1)</strong></li>
+          <li>Ví bắt đầu bằng <strong>R</strong></li>
+          <li>Thread ≈ CPU cores − 1</li>
+          <li>Cắm sạc, để máy mát</li>
         </ul>
       </div>
     </section>
 
     <footer>
-      <p>NOVA · Termux VRSC Miner</p>
+      <p>NOVA · soft & simple</p>
       <p style="margin-top:6px"><a href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
   </div>
@@ -391,8 +413,8 @@
       navigator.clipboard.writeText(text).then(function() {
         var btn = el.querySelector('.copy-btn');
         if (!btn) return;
-        var old = btn.innerText; btn.innerText = 'Copied!';
-        setTimeout(function() { btn.innerText = old; }, 1500);
+        var old = btn.innerText; btn.innerText = 'OK';
+        setTimeout(function() { btn.innerText = old; }, 1400);
       });
     }
   </script>
