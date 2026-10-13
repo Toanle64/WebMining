@@ -46,10 +46,59 @@ scan_cores() {
       *) [ "$v" -gt "$max" ] && max=$v ;;
     esac
   done
-  # Online = core Termux thực dùng được (ưu tiên nproc)
   case "$onl" in ''|*[!0-9]*) SCAN_ONL=$max ;; *) SCAN_ONL=$onl ;; esac
   SCAN_TOTAL=$max
   echo "$SCAN_ONL"
+}
+
+# Vùng mạng theo IP (phù hợp chọn pool hơn GPS)
+# Set: GEO_CC GEO_CITY GEO_REGION_KEY(AP|NA|EU) GEO_POOL_HINT GEO_DEFAULT_NUM
+detect_region() {
+  GEO_CC="?"; GEO_CITY=""; GEO_REGION_KEY="AP"; GEO_POOL_HINT="LuckPool AP"; GEO_DEFAULT_NUM=1
+  echo -e "  ${C}▸${N} Đang nhận vùng (IP)..."
+  local j
+  j=$(curl -sL --max-time 8 "https://ipapi.co/json/" 2>/dev/null) || j=""
+  if [ -z "$j" ] || ! echo "$j" | grep -q country; then
+    j=$(curl -sL --max-time 8 "https://ipinfo.io/json" 2>/dev/null) || j=""
+  fi
+  if [ -n "$j" ]; then
+    if command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then
+      local PY; PY=$(command -v python3 || command -v python)
+      eval "$($PY -c "
+import sys,json,re
+raw=sys.stdin.read()
+try:
+ d=json.loads(raw)
+except Exception:
+ print('GEO_CC=\"?\";GEO_CITY=\"\"');
+ sys.exit(0)
+cc=(d.get('country_code') or d.get('country') or '?')
+if isinstance(cc,str) and len(cc)>2: cc=cc[:2]
+city=(d.get('city') or '')
+print('GEO_CC=%r;GEO_CITY=%r'%(cc.upper() if isinstance(cc,str) else '?', city))
+" <<< "$j" 2>/dev/null)"
+    else
+      GEO_CC=$(echo "$j" | grep -oE '"country_code"[[:space:]]*:[[:space:]]*"[A-Z]{2}"|"country"[[:space:]]*:[[:space:]]*"[A-Z]{2}"' | head -1 | grep -oE '[A-Z]{2}' | tail -1)
+      GEO_CC=${GEO_CC:-?}
+    fi
+  fi
+
+  case "$GEO_CC" in
+    US|CA|MX|BR|AR|CL|CO|PE)
+      GEO_REGION_KEY="NA"; GEO_POOL_HINT="LuckPool NA"; GEO_DEFAULT_NUM=2 ;;
+    GB|IE|FR|DE|NL|BE|ES|IT|PL|RO|CZ|AT|CH|SE|NO|DK|FI|PT|GR|UA|RU|TR)
+      GEO_REGION_KEY="EU"; GEO_POOL_HINT="LuckPool EU"; GEO_DEFAULT_NUM=3 ;;
+    VN|TH|ID|MY|SG|PH|KH|LA|MM|BN|JP|KR|TW|HK|CN|IN|AU|NZ|BD|PK)
+      GEO_REGION_KEY="AP"; GEO_POOL_HINT="LuckPool AP"; GEO_DEFAULT_NUM=1 ;;
+    *)
+      GEO_REGION_KEY="AP"; GEO_POOL_HINT="LuckPool AP (mặc định)"; GEO_DEFAULT_NUM=1 ;;
+  esac
+
+  if [ "$GEO_CC" = "?" ]; then
+    echo -e "  ${Y}Không lấy được IP region → gợi ý AP${N}"
+  else
+    echo -e "  ${G}✓${N} Vùng: ${W}${GEO_CC}${N}${GEO_CITY:+ · $GEO_CITY} → gợi ý pool: ${W}${GEO_POOL_HINT}${N}"
+  fi
 }
 
 fix_libs() {
@@ -136,20 +185,17 @@ do_config() {
   echo -e "  ${W}${B}CẤU HÌNH NOVA${N}"
   line
 
+  detect_region
+  echo
+
   ONL=$(scan_cores)
   TOTAL=${SCAN_TOTAL:-$ONL}
-  # Mặc định khi Enter trống = max core online − 1
-  if [ "$ONL" -gt 1 ] 2>/dev/null; then
-    DEF=$((ONL - 1))
-  else
-    DEF=1
-  fi
+  if [ "$ONL" -gt 1 ] 2>/dev/null; then DEF=$((ONL - 1)); else DEF=1; fi
 
-  echo -e "  ${C}▸${N} Core online (Termux): ${W}${ONL}${N}  → mặc định thread: ${W}${DEF}${N} ${D}(= max − 1)${N}"
+  echo -e "  ${C}▸${N} Core online: ${W}${ONL}${N} → thread mặc định: ${W}${DEF}${N} ${D}(max−1)${N}"
   if [ "$TOTAL" -gt "$ONL" ] 2>/dev/null; then
-    echo -e "  ${D}Máy khai báo ${TOTAL} core nhưng Termux chỉ dùng được ${ONL}${N}"
+    echo -e "  ${D}Máy khai báo ${TOTAL} core, Termux dùng ${ONL}${N}"
   fi
-  echo -e "  ${D}Chỉ Enter = dùng ${DEF}. Muốn khác thì gõ số.${N}"
   echo
 
   echo -e "  ${C}0.${N} Chế độ: ${W}1${N} Pool  ${W}2${N} Hybrid  ${W}3${N} Solo"
@@ -174,8 +220,11 @@ do_config() {
   PRIMARY=""; PNAME=""
   case $MODE in
     2)
-      echo; echo -e "  Hybrid: ${W}1${N} AP  ${W}2${N} NA  ${W}3${N} EU"
-      echo -ne "  ${D}[1]${N}: "; read -r REG; REG=${REG:-1}
+      echo
+      echo -e "  Hybrid server: ${W}1${N} AP  ${W}2${N} NA  ${W}3${N} EU"
+      echo -e "  ${D}Gợi ý theo vùng ${GEO_CC}: chọn ${GEO_DEFAULT_NUM} (${GEO_POOL_HINT})${N}"
+      echo -ne "  ${D}[${GEO_DEFAULT_NUM}]${N}: "
+      read -r REG; REG=${REG:-$GEO_DEFAULT_NUM}
       case $REG in
         2) PRIMARY="stratum+tcp://na.luckpool.net:3956" ;;
         3) PRIMARY="stratum+tcp://eu.luckpool.net:3956" ;;
@@ -195,8 +244,18 @@ do_config() {
 EOL
       ;;
     3)
-      echo; echo -e "  Solo: ${W}1${N} SG  ${W}2${N} AP  ${W}3${N} US  ${W}4${N} DE"
-      echo -ne "  ${D}[1]${N}: "; read -r REG; REG=${REG:-1}
+      echo
+      # Solo Vipor: map region → default port server
+      local SOLO_DEF=1
+      case "$GEO_REGION_KEY" in
+        NA) SOLO_DEF=3 ;;
+        EU) SOLO_DEF=4 ;;
+        *) SOLO_DEF=1 ;;
+      esac
+      echo -e "  Solo: ${W}1${N} SG  ${W}2${N} AP  ${W}3${N} US  ${W}4${N} DE"
+      echo -e "  ${D}Gợi ý vùng ${GEO_CC}: chọn ${SOLO_DEF}${N}"
+      echo -ne "  ${D}[${SOLO_DEF}]${N}: "
+      read -r REG; REG=${REG:-$SOLO_DEF}
       case $REG in
         2) PRIMARY="stratum+tcp://ap.vipor.net:5045" ;;
         3) PRIMARY="stratum+tcp://us.vipor.net:5045" ;;
@@ -220,14 +279,26 @@ EOL
 EOL
       ;;
     *)
-      echo; echo -e "  Pool: ${W}1${N} LuckPool AP  ${W}2${N} NA  ${W}3${N} Vipor  ${W}4${N} Verus.farm"
-      echo -ne "  ${D}[1]${N}: "; read -r POOL; POOL=${POOL:-1}
+      echo
+      echo -e "  Pool: ${W}1${N} LuckPool AP  ${W}2${N} LuckPool NA  ${W}3${N} Vipor SG  ${W}4${N} Verus.farm"
+      # Map region: AP=1, NA=2; EU → vẫn gợi ý AP list nhưng hint EU via custom
+      local PDEF=$GEO_DEFAULT_NUM
+      [ "$PDEF" = "3" ] && PDEF=1   # menu pool không có EU riêng → AP + failover
+      echo -e "  ${D}Gợi ý theo IP ${GEO_CC}: ${GEO_POOL_HINT} → chọn ${PDEF}${N}"
+      [ "$GEO_REGION_KEY" = "EU" ] && echo -e "  ${D}(EU: Enter vẫn AP; failover có eu.luckpool.net)${N}"
+      echo -ne "  ${D}[${PDEF}]${N}: "
+      read -r POOL; POOL=${POOL:-$PDEF}
       case $POOL in
         2) PRIMARY="stratum+tcp://na.luckpool.net:3956"; PNAME="LuckPool NA" ;;
         3) PRIMARY="stratum+tcp://sg.vipor.net:5040"; PNAME="Vipor SG" ;;
         4) PRIMARY="stratum+tcp://verus.farm:9999"; PNAME="Verus.farm" ;;
         *) PRIMARY="stratum+tcp://ap.luckpool.net:3956"; PNAME="LuckPool AP" ;;
       esac
+      # EU: primary eu nếu user giữ default và region EU
+      if [ "$GEO_REGION_KEY" = "EU" ] && [ "$POOL" = "$PDEF" ]; then
+        PRIMARY="stratum+tcp://eu.luckpool.net:3956"
+        PNAME="LuckPool EU"
+      fi
       write_pool_config "$WALLET" "$WORKER" "$THREADS" "x" "$PRIMARY"
       ;;
   esac
@@ -239,10 +310,11 @@ THREADS=$THREADS
 PNAME=$PNAME
 URL=$PRIMARY
 CORES=$ONL
+GEO_CC=$GEO_CC
 EOL
 
   echo
-  echo -e "  ${G}✓ Đã lưu${N}  ${W}$PNAME${N}  t=${W}$THREADS${N} ${D}(max online ${ONL} − 1 mặc định)${N}"
+  echo -e "  ${G}✓ Đã lưu${N}  ${W}$PNAME${N}  t=${W}$THREADS${N}  ${D}(${GEO_CC})${N}"
   echo -ne "  Enter..."; read -r _
 }
 
@@ -267,7 +339,7 @@ start_mine() {
   test_ccminer; [ $? = 2 ] && { echo -e "  ${R}Lỗi lib — menu 4${N}"; echo -ne "  Enter..."; read -r _; return; }
   echo -e "${C}┌──────────────────────────────────────────┐${N}"
   echo -e "${C}│${N} ${W}${B}NOVA LOG${N}  ${D}Ctrl+C dừng${N}"
-  echo -e "${C}│${N} ${PNAME:-?} · t=${THREADS:-?}"
+  echo -e "${C}│${N} ${PNAME:-?} · t=${THREADS:-?} · ${GEO_CC:-?}"
   echo -e "${C}└──────────────────────────────────────────┘${N}"
   cd "$DIR" || exit 1
   FAIL=0
@@ -290,8 +362,8 @@ main_menu() {
   while true; do
     banner
     ONL=$(scan_cores)
-    echo -e "  ${D}CPU online: ${ONL} · mặc định thread: $((ONL>1?ONL-1:1)) (= max−1)${N}"
-    [ -f "$META" ] && source "$META" && echo -e "  ${D}${PNAME:-?} · t=${THREADS}${N}"
+    echo -e "  ${D}CPU online: ${ONL} · thread mặc định: $((ONL>1?ONL-1:1))${N}"
+    [ -f "$META" ] && source "$META" && echo -e "  ${D}${PNAME:-?} · t=${THREADS} · ${GEO_CC:-}${N}"
     line
     echo
     echo -e "  ${W}${B}MENU${N}"
