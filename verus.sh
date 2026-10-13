@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# NOVA — Termux VRSC Miner (ổn định kết nối hơn)
+# NOVA — Termux VRSC Miner
 
 R='\033[0;31m'; G='\033[0;32m'; Y='\033[1;33m'
 C='\033[0;36m'; W='\033[1;37m'; D='\033[0;90m'
@@ -32,23 +32,39 @@ EOF
 
 line() { echo -e "  ${D}────────────────────────────────────${N}"; }
 
-ensure_deps() {
+# Tải / cập nhật miner tối ưu cho Termux (Darktron ARMv8 pre-compiled)
+install_miner() {
+  local FORCE="${1:-0}"
   pkg install -y libjansson wget curl >/dev/null 2>&1
-  if [ ! -f "$DIR/ccminer" ]; then
-    echo -e "  ${C}▸${N} Tải miner..."
+  if [ "$FORCE" = "1" ] || [ ! -f "$DIR/ccminer" ]; then
+    echo -e "  ${C}▸${N} Tải miner mới nhất (Darktron ARMv8)..."
+    rm -f "$DIR/ccminer" "$DIR/ccminer.tmp"
+    OK=0
     for U in \
       "https://raw.githubusercontent.com/Darktron/pre-compiled/generic/ccminer" \
-      "https://cdn.jsdelivr.net/gh/Darktron/pre-compiled@generic/ccminer"
+      "https://cdn.jsdelivr.net/gh/Darktron/pre-compiled@generic/ccminer" \
+      "https://github.com/Darktron/pre-compiled/raw/generic/ccminer"
     do
-      if wget -q --timeout=30 -O "$DIR/ccminer" "$U" 2>/dev/null; then
-        chmod +x "$DIR/ccminer"
-        echo -e "  ${G}✓${N} Miner OK"
-        return 0
+      if wget -q --timeout=45 --tries=3 -O "$DIR/ccminer.tmp" "$U" 2>/dev/null; then
+        if [ -s "$DIR/ccminer.tmp" ]; then
+          mv "$DIR/ccminer.tmp" "$DIR/ccminer"
+          chmod +x "$DIR/ccminer"
+          # smoke test
+          if "$DIR/ccminer" --help >/dev/null 2>&1 || [ -x "$DIR/ccminer" ]; then
+            echo -e "  ${G}✓${N} Miner sẵn sàng (generic ARMv8)"
+            OK=1
+            break
+          fi
+        fi
       fi
     done
-    echo -e "  ${R}✗ Không tải được miner. Kiểm tra mạng.${N}"
-    return 1
+    rm -f "$DIR/ccminer.tmp"
+    if [ "$OK" != "1" ]; then
+      echo -e "  ${R}✗ Tải miner thất bại. Kiểm tra mạng / WiFi.${N}"
+      return 1
+    fi
   fi
+  return 0
 }
 
 write_pool_config() {
@@ -67,7 +83,7 @@ write_pool_config() {
   "algo": "verus",
   "threads": $THREADS,
   "cpu-priority": 1,
-  "retry-pause": 8
+  "retry-pause": 5
 }
 EOL
 }
@@ -120,7 +136,7 @@ do_config() {
   "algo": "verus",
   "threads": $THREADS,
   "cpu-priority": 1,
-  "retry-pause": 8
+  "retry-pause": 5
 }
 EOL
       ;;
@@ -146,7 +162,7 @@ EOL
   "algo": "verus",
   "threads": $THREADS,
   "cpu-priority": 1,
-  "retry-pause": 8
+  "retry-pause": 5
 }
 EOL
       ;;
@@ -173,7 +189,6 @@ EOL
 
   echo
   echo -e "  ${G}✓ Đã lưu${N}  ${W}$PNAME${N}  t=${W}$THREADS${N}"
-  echo -e "  ${D}Pool dự phòng bật — giảm lỗi mất kết nối${N}"
   echo -ne "  Enter..."; read -r _
 }
 
@@ -217,17 +232,12 @@ start_mine() {
     echo -e "  ${Y}Chưa config.${N}"; sleep 1; do_config
   fi
   [ -f "$META" ] && source "$META"
-  ensure_deps || { echo -ne "  Enter..."; read -r _; return; }
-
-  if ! ping -c 1 -W 3 8.8.8.8 >/dev/null 2>&1 && ! ping -c 1 -W 3 1.1.1.1 >/dev/null 2>&1; then
-    echo -e "  ${Y}⚠ Mạng yếu / không ping được. Vẫn thử pool...${N}"
-    sleep 1
-  fi
+  install_miner 0 || { echo -ne "  Enter..."; read -r _; return; }
 
   echo -e "${C}┌──────────────────────────────────────────┐${N}"
   echo -e "${C}│${N} ${W}${B}NOVA LOG${N}   ${D}Ctrl+C = dừng → menu${N}"
-  echo -e "${C}│${N} ${PNAME:-?} · t=${THREADS:-?} · failover + auto-retry"
-  echo -e "${C}│${N} ${D}Xanh = MH/s · Đỏ = lỗi kết nối${N}"
+  echo -e "${C}│${N} ${PNAME:-?} · t=${THREADS:-?} · retry 5s"
+  echo -e "${C}│${N} ${D}Xanh = MH/s · Đỏ = lỗi${N}"
   echo -e "${C}└──────────────────────────────────────────┘${N}"
   echo
   echo -e "  ${C}▸${N} Kết nối pool..."
@@ -246,9 +256,9 @@ start_mine() {
     done
     EXIT=${PIPESTATUS[0]}
     if [ "$EXIT" = "130" ] || [ "$EXIT" = "143" ]; then break; fi
-    echo -e "  ${Y}│ Rớt kết nối (code $EXIT). Thử lại sau 10s...${N}"
+    echo -e "  ${Y}│ Rớt kết nối (code $EXIT). Thử lại sau 5s...${N}"
     echo -e "  ${D}│ Ctrl+C để về menu${N}"
-    sleep 10 || break
+    sleep 5 || break
   done
   echo
   echo -e "  ${Y}Đã dừng.${N}"
@@ -258,7 +268,7 @@ start_mine() {
 main_menu() {
   while true; do
     banner
-    ensure_deps 2>/dev/null
+    install_miner 0 2>/dev/null
     if [ -f "$META" ]; then
       source "$META"
       echo -e "  ${D}${PNAME:-?} · ${WALLET:0:10}... · t=${THREADS}${N}"
@@ -269,7 +279,8 @@ main_menu() {
     echo -e "     ${C}1${N}  Cấu hình"
     echo -e "     ${C}2${N}  Bắt đầu đào"
     echo -e "     ${C}3${N}  Hashrate & số dư"
-    echo -e "     ${C}4${N}  Thoát"
+    echo -e "     ${C}4${N}  Cập nhật miner mới nhất"
+    echo -e "     ${C}5${N}  Thoát"
     echo
     echo -ne "  Chọn ${D}[2]${N}: "
     read -r CH; CH=${CH:-2}
@@ -277,7 +288,8 @@ main_menu() {
       1) do_config ;;
       2) start_mine ;;
       3) show_stats ;;
-      4) echo -e "  ${G}Nova bye.${N}"; exit 0 ;;
+      4) install_miner 1; echo -ne "  Enter..."; read -r _ ;;
+      5) echo -e "  ${G}Nova bye.${N}"; exit 0 ;;
     esac
   done
 }
