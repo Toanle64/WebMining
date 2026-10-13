@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NOVA — Termux VRSC Miner</title>
-  <meta name="description" content="Copy 1 lệnh, dán Termux, chạy. Đào Verus trên Android.">
+  <meta name="description" content="Copy 1 lệnh, dán Termux, chạy. Kèm cách fix lỗi thường gặp.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -106,23 +106,24 @@
       background: #0e1117;
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 14px;
-      padding: 16px 14px;
-      padding-right: 72px;
+      padding: 14px 12px;
+      padding-right: 70px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--green);
       line-height: 1.55;
       overflow-x: auto;
       word-break: break-all;
+      margin-top: 8px;
     }
     .copy-btn {
-      position: absolute; top: 10px; right: 10px;
+      position: absolute; top: 8px; right: 8px;
       background: linear-gradient(135deg, #38bdf8, #818cf8);
       border: none;
       color: #0b0d12;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 0.75rem;
+      padding: 7px 12px;
+      border-radius: 9px;
+      font-size: 0.72rem;
       font-weight: 700;
       cursor: pointer;
       font-family: Inter, sans-serif;
@@ -190,6 +191,25 @@
       color: #fde68a;
     }
     .warn ul { margin: 6px 0 0 16px; }
+    .fix {
+      background: var(--bg2);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      margin-bottom: 12px;
+    }
+    .fix:last-child { margin-bottom: 0; }
+    .fix h3 {
+      font-size: 0.88rem;
+      font-weight: 650;
+      color: #fde68a;
+      margin-bottom: 4px;
+    }
+    .fix .why {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
     footer {
       text-align: center;
       margin-top: 40px;
@@ -226,17 +246,15 @@
       <div class="pills">
         <span class="pill">1 lệnh</span>
         <span class="pill">Pool / Hybrid / Solo</span>
-        <span class="pill">Tự sửa lib</span>
+        <span class="pill">Fix lỗi sẵn</span>
       </div>
     </header>
 
-    <!-- LỆNH CHÍNH -->
     <section class="card hero-cmd">
       <div class="card-title"><span class="icon">⚡</span> Chạy ngay</div>
-      <p class="lead">Mở Termux → dán lệnh này → Enter. Script tự cài thư viện, tải miner, mở menu.</p>
-      <div class="code-box" id="cmd1">pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh<button type="button" class="copy-btn" onclick="copyCmd()">Copy</button></div>
-      <button type="button" class="btn btn-primary" onclick="copyCmd()">Copy lệnh · dán vào Termux</button>
-      <div class="note">Lần đầu có thể hơi lâu (update + tải miner). Sau đó chỉ cần <code style="color:#fff">bash $HOME/verus.sh</code></div>
+      <p class="lead">Termux đã ổn → dán lệnh này → Enter.</p>
+      <div class="code-box" id="cmd-main">pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh">Copy</button></div>
+      <div class="note">Lần sau chỉ cần: <code style="color:#fff">bash $HOME/verus.sh</code></div>
     </section>
 
     <section class="card">
@@ -253,26 +271,83 @@
         <li>
           <span class="n">2</span>
           <div>
-            <strong>Copy lệnh ở trên · dán · Enter</strong>
-            <span>Tự update, cài openssl/libcurl, tải script, chạy menu.</span>
+            <strong>Copy lệnh · dán · Enter</strong>
+            <span>Nếu báo lỗi curl/pkg → xem mục Sửa lỗi bên dưới trước.</span>
           </div>
         </li>
         <li>
           <span class="n">3</span>
           <div>
-            <strong>Trong menu: 1 cấu hình → 2 đào</strong>
-            <span>Quét core CPU · chọn Pool · nhập ví R... · xong.</span>
+            <strong>Menu: 1 cấu hình → 2 đào</strong>
+            <span>Ví bắt đầu bằng R · chọn Pool.</span>
           </div>
         </li>
       </ul>
     </section>
 
+    <!-- SỬA LỖI -->
     <section class="card">
-      <div class="card-title"><span class="icon">✦</span> Có gì trong script</div>
+      <div class="card-title"><span class="icon">🔧</span> Sửa lỗi thường gặp</div>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:14px">Copy lệnh tương ứng → dán Termux → Enter. Làm <b style="color:#fff">theo thứ tự</b> nếu lỗi chồng.</p>
+
+      <div class="fix">
+        <h3>1. CANNOT LINK … SSL_set_quic / curl hỏng / pkg fail</h3>
+        <p class="why">Thư viện OpenSSL và libcurl lệch phiên bản. pkg dùng curl nên cũng chết.</p>
+        <div class="code-box">apt update && apt full-upgrade -y<button type="button" class="copy-btn" data-copy="apt update && apt full-upgrade -y">Copy</button></div>
+        <div class="code-box">pkg reinstall -y openssl libcurl curl wget<button type="button" class="copy-btn" data-copy="pkg reinstall -y openssl libcurl curl wget">Copy</button></div>
+      </div>
+
+      <div class="fix">
+        <h3>2. No mirror / termux-change-repo</h3>
+        <p class="why">Chưa chọn kho mirror → apt/pkg không tải được.</p>
+        <div class="code-box">termux-change-repo<button type="button" class="copy-btn" data-copy="termux-change-repo">Copy</button></div>
+        <p class="why" style="margin-top:8px">Chọn Main → mirror Asia / Cloudflare → OK, rồi chạy lại lệnh ở mục 1.</p>
+      </div>
+
+      <div class="fix">
+        <h3>3. pkg: command not found</h3>
+        <p class="why">Môi trường hỏng hoặc dán lệnh bị lỗi. Dùng apt:</p>
+        <div class="code-box">apt update && apt full-upgrade -y && apt install -y wget curl openssl libcurl libjansson<button type="button" class="copy-btn" data-copy="apt update && apt full-upgrade -y && apt install -y wget curl openssl libcurl libjansson">Copy</button></div>
+      </div>
+
+      <div class="fix">
+        <h3>4. Dán lệnh ra [200~ … ~</h3>
+        <p class="why">Bracketed paste. Xóa dòng lỗi, dán lại từng lệnh ngắn, hoặc:</p>
+        <div class="code-box">printf '\e[?2004l'<button type="button" class="copy-btn" data-copy="printf '\e[?2004l'">Copy</button></div>
+      </div>
+
+      <div class="fix">
+        <h3>5. CANNOT LINK ./ccminer (miner không chạy)</h3>
+        <p class="why">Binary cũ không khớp lib. Sửa lib rồi biên dịch lại trong script.</p>
+        <div class="code-box">pkg reinstall -y openssl libcurl libjansson && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg reinstall -y openssl libcurl libjansson && bash $HOME/verus.sh">Copy</button></div>
+        <p class="why" style="margin-top:8px">Trong menu NOVA bấm <b style="color:#fff">4</b> → tự tải / biên dịch miner.</p>
+      </div>
+
+      <div class="fix">
+        <h3>6. wget / network fail khi tải script</h3>
+        <div class="code-box">pkg install -y wget curl && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg install -y wget curl && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh">Copy</button></div>
+      </div>
+
+      <div class="fix">
+        <h3>7. Rớt pool / timeout khi đang đào</h3>
+        <p class="why">Mạng yếu hoặc pool xa. Trong menu: cấu hình lại → chọn LuckPool AP · giảm thread.</p>
+        <div class="code-box">bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="bash $HOME/verus.sh">Copy</button></div>
+      </div>
+
+      <div class="fix">
+        <h3>8. Reset sạch Termux (cùng cực)</h3>
+        <p class="why">Xóa data app Termux trong Cài đặt Android → mở lại → chọn mirror → full-upgrade → chạy lệnh chính.</p>
+        <div class="code-box">termux-change-repo<button type="button" class="copy-btn" data-copy="termux-change-repo">Copy</button></div>
+        <div class="code-box">apt update && apt full-upgrade -y<button type="button" class="copy-btn" data-copy="apt update && apt full-upgrade -y">Copy</button></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span class="icon">✦</span> Trong script</div>
       <div class="feat-grid">
-        <div class="feat"><strong>1 lệnh xong</strong><span>Update + cài + chạy</span></div>
-        <div class="feat"><strong>Sửa lib</strong><span>Hết lỗi CANNOT LINK</span></div>
-        <div class="feat"><strong>Quét core</strong><span>Gợi ý số thread</span></div>
+        <div class="feat"><strong>Sửa lib</strong><span>Menu 4</span></div>
+        <div class="feat"><strong>Quét core</strong><span>Gợi ý thread</span></div>
+        <div class="feat"><strong>Failover</strong><span>Đổi pool khi rớt</span></div>
         <div class="feat"><strong>3 chế độ</strong><span>Pool / Hybrid / Solo</span></div>
       </div>
     </section>
@@ -281,38 +356,40 @@
       <div class="card-title"><span class="icon">!</span> Lưu ý</div>
       <div class="note warn" style="margin-top:0">
         <ul>
-          <li>Ví phải bắt đầu bằng <strong>R</strong></li>
+          <li>Ví bắt đầu bằng <strong>R</strong></li>
           <li>Phone: chọn <strong>Pool (1)</strong></li>
-          <li>Nếu vẫn lỗi lib → menu <strong>4</strong> (biên dịch miner)</li>
+          <li>Dán lệnh: tránh ký tự lạ <code>[200~</code></li>
           <li>Cắm sạc, để máy mát</li>
         </ul>
       </div>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">↓</span> Tải file (tuỳ chọn)</div>
-      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:4px">Không cần nếu đã copy lệnh ở trên.</p>
-      <button type="button" class="btn btn-primary" id="btnDl" style="margin-top:10px">Tải verus.sh</button>
+      <div class="card-title"><span class="icon">↓</span> Tải file</div>
+      <button type="button" class="btn btn-primary" id="btnDl" style="margin-top:4px">Tải verus.sh</button>
       <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a>
     </section>
 
     <footer>
-      <p>NOVA · copy · paste · mine</p>
+      <p>NOVA · copy · fix · mine</p>
       <p style="margin-top:6px"><a href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
   </div>
-  <div class="toast" id="toast">Đã copy lệnh</div>
+  <div class="toast" id="toast">Đã copy</div>
   <script>
-    var CMD = 'pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh';
     function toast(msg) {
       var t = document.getElementById('toast');
       t.textContent = msg || 'Đã copy';
       t.classList.add('show');
       setTimeout(function() { t.classList.remove('show'); }, 1800);
     }
-    function copyCmd() {
-      navigator.clipboard.writeText(CMD).then(function() { toast('Đã copy lệnh — dán vào Termux'); });
-    }
+    document.querySelectorAll('[data-copy]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(btn.getAttribute('data-copy')).then(function() {
+          toast('Đã copy — dán vào Termux');
+        });
+      });
+    });
     document.getElementById('btnDl').addEventListener('click', function() {
       fetch('https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh')
         .then(function(r) { return r.text(); })
