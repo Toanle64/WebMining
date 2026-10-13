@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verus Termux Miner — One Click</title>
-  <meta name="description" content="Script đào Verus Coin (VRSC) one-click trên Termux.">
+  <title>Verus Termux Miner — Pool / Hybrid / Solo</title>
+  <meta name="description" content="Script đào Verus: Pool share, Hybrid Solo LuckPool, Solo Vipor.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -24,7 +24,7 @@
       box-shadow: 0 14px 40px rgba(34,211,238,0.28); margin-bottom: 18px; font-size: 34px; font-weight: 800; color: #fff; }
     header h1 { font-size: clamp(1.7rem, 5vw, 2.15rem); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;
       background: linear-gradient(90deg, #fff, #a5f3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    header .sub { color: var(--muted); font-size: 1.02rem; max-width: 400px; margin: 0 auto 16px; }
+    header .sub { color: var(--muted); font-size: 1.02rem; max-width: 420px; margin: 0 auto 16px; }
     .pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .pill { font-size: 0.72rem; font-weight: 600; padding: 5px 11px; border-radius: 999px;
       background: rgba(34,211,238,0.1); color: var(--primary); border: 1px solid rgba(34,211,238,0.22); }
@@ -36,6 +36,10 @@
     .feat { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
     .feat strong { display: block; color: var(--primary); font-size: 0.78rem; margin-bottom: 3px; }
     .feat span { font-size: 0.86rem; color: var(--muted); }
+    .mode-list { display: flex; flex-direction: column; gap: 12px; }
+    .mode-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .mode-item strong { color: var(--primary); display: block; margin-bottom: 4px; }
+    .mode-item p { color: var(--muted); font-size: 0.88rem; margin: 0; }
     .step { display: flex; gap: 12px; margin-bottom: 20px; align-items: flex-start; }
     .step-num { min-width: 30px; height: 30px; border-radius: 9px;
       background: linear-gradient(145deg, rgba(34,211,238,0.2), rgba(139,92,246,0.15)); color: var(--primary);
@@ -80,21 +84,39 @@
     <header>
       <div class="logo-wrap">V</div>
       <h1>Verus Termux Miner</h1>
-      <p class="sub">Script one-click đào Verus Coin (VRSC) trên Android bằng Termux</p>
+      <p class="sub">Pool · Hybrid Solo · Solo — đào VRSC trên Termux một chạm</p>
       <div class="pills">
-        <span class="pill">One-click</span>
-        <span class="pill">Termux UI mới</span>
-        <span class="pill">Tải file 1 chạm</span>
+        <span class="pill">Pool share</span>
+        <span class="pill">Hybrid Solo</span>
+        <span class="pill">Solo Vipor</span>
       </div>
     </header>
 
     <section class="card">
+      <div class="card-title"><span class="icon">0</span> Chế độ đào</div>
+      <div class="mode-list">
+        <div class="mode-item">
+          <strong>1 · Pool (share hashrate)</strong>
+          <p>Chia hashrate với pool → nhận coin đều theo share. Min payout thấp (LuckPool 0.0001). <b style="color:#fff">Khuyên dùng trên điện thoại.</b></p>
+        </div>
+        <div class="mode-item">
+          <strong>2 · Hybrid Solo (LuckPool)</strong>
+          <p>Tìm được block → nhận ~75% thưởng block; vẫn nhận phần share từ pool. Password pool: <code style="color:var(--primary)">x,hybrid</code>.</p>
+        </div>
+        <div class="mode-item">
+          <strong>3 · Solo (Vipor port 5045)</strong>
+          <p>Chỉ nhận coin khi máy bạn tìm full block. Trên điện thoại xác suất rất thấp — phù hợp ai muốn thử vận may.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
       <div class="card-title"><span class="icon">✦</span> Tính năng</div>
       <div class="feat-grid">
-        <div class="feat"><strong>Giao diện Termux</strong><span>Banner ASCII + màu + validate ví</span></div>
-        <div class="feat"><strong>Tự cài đặt</strong><span>Tự tải ccminer & thư viện</span></div>
-        <div class="feat"><strong>Chọn pool</strong><span>LuckPool, Vipor, Verus.farm</span></div>
-        <div class="feat"><strong>Tải 1 chạm</strong><span>File về máy, không mở code GitHub</span></div>
+        <div class="feat"><strong>3 chế độ</strong><span>Pool / Hybrid / Solo</span></div>
+        <div class="feat"><strong>Giao diện Termux</strong><span>Banner + màu + validate ví</span></div>
+        <div class="feat"><strong>Tự cài đặt</strong><span>Tự tải ccminer</span></div>
+        <div class="feat"><strong>Tải 1 chạm</strong><span>Blob download, không mở GitHub</span></div>
       </div>
     </section>
 
@@ -104,73 +126,62 @@
         <div class="step-num">1</div>
         <div class="step-body">
           <strong>Cài Termux</strong>
-          <p>Tải từ F-Droid (không dùng CH Play).</p>
+          <p>Từ F-Droid (không dùng CH Play).</p>
           <a class="link-inline" href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener">→ Tải Termux</a>
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <strong>Cách A — Lệnh một dòng</strong>
+          <strong>Chạy lệnh một dòng</strong>
           <div class="code-box" id="cmd1">pkg install wget -y && wget -O verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x verus.sh && ./verus.sh<button type="button" class="copy-btn" onclick="copyText('cmd1')">Copy</button></div>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <strong>Cách B — Tải file rồi chạy</strong>
-          <p>Bấm nút bên dưới → file tải về → trong Termux:</p>
-          <div class="code-box" id="cmd2">cd /sdcard/Download && bash verus.sh<button type="button" class="copy-btn" onclick="copyText('cmd2')">Copy</button></div>
+          <strong>Chọn chế độ → ví → thread → server</strong>
+          <p>Script hỏi chế độ 1/2/3 rồi các bước còn lại. <code style="color:var(--primary)">Ctrl+C</code> dừng.</p>
         </div>
       </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-body">
-          <strong>Nhập ví · thread · pool → đào</strong>
-          <p>Giao diện màu, kiểm tra địa chỉ ví. <code style="color:var(--primary)">Ctrl+C</code> để dừng.</p>
-        </div>
-      </div>
-      <div class="note">Coin tự về ví khi đạt min payout. Không cần đăng ký pool.</div>
+      <div class="note">Pool mode: coin tự về ví khi đạt min payout. Không cần đăng ký.</div>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">↓</span> Tải script</div>
-      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:14px">
-        Bấm nút sẽ <strong style="color:#fff">tải file verus.sh về máy ngay</strong> — không mở trang code GitHub.
-      </p>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:14px">Tải <strong style="color:#fff">verus.sh</strong> về máy (không mở trang code).</p>
       <button type="button" class="btn btn-primary" id="btnDl">⬇ Tải verus.sh ngay</button>
       <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">Xem mã nguồn trên GitHub</a>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">P</span> Pool hỗ trợ</div>
+      <div class="card-title"><span class="icon">P</span> Pool (mode 1)</div>
       <table class="pool-table">
         <thead><tr><th>Pool</th><th>Phí</th><th>Min payout</th></tr></thead>
         <tbody>
           <tr><td>LuckPool Asia <span class="tag">Mặc định</span></td><td>1%</td><td>0.0001 VRSC</td></tr>
           <tr><td>LuckPool NA</td><td>1%</td><td>0.0001 VRSC</td></tr>
-          <tr><td>Vipor</td><td>0.8%</td><td>0.001 VRSC</td></tr>
+          <tr><td>Vipor (5040)</td><td>0.8%</td><td>0.001 VRSC</td></tr>
           <tr><td>Verus.farm</td><td>0.3%</td><td>0.01 VRSC</td></tr>
         </tbody>
       </table>
-      <div class="note">LuckPool phù hợp điện thoại vì min payout rất thấp.</div>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">!</span> Lưu ý</div>
       <div class="note warn" style="margin-top:0">
         <ul>
+          <li>Điện thoại: ưu tiên <strong>Pool (1)</strong> — ổn định nhất</li>
+          <li>Solo thuần rất khó ra block với hashrate phone</li>
           <li>Chỉ dùng địa chỉ ví bắt đầu bằng <strong>R</strong></li>
-          <li>Không dùng địa chỉ sàn</li>
           <li>Thread ≈ số nhân CPU trừ 1–2</li>
-          <li>Cắm sạc, để máy mát khi đào lâu</li>
-          <li>Android 64-bit (Android 7+)</li>
+          <li>Cắm sạc, để máy mát</li>
         </ul>
       </div>
     </section>
 
     <footer>
-      <p>Verus Termux Miner · One-click cho cộng đồng</p>
+      <p>Verus Termux Miner · Pool / Hybrid / Solo</p>
       <p style="margin-top:6px"><a href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
   </div>
@@ -183,19 +194,14 @@
           var blob = new Blob([text], { type: 'application/x-sh' });
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
-          a.href = url;
-          a.download = 'verus.sh';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          a.href = url; a.download = 'verus.sh';
+          document.body.appendChild(a); a.click();
+          document.body.removeChild(a); URL.revokeObjectURL(url);
           var t = document.getElementById('toast');
           t.classList.add('show');
           setTimeout(function() { t.classList.remove('show'); }, 2000);
         })
-        .catch(function() {
-          alert('Không tải được. Hãy dùng lệnh wget trong Termux.');
-        });
+        .catch(function() { alert('Không tải được. Dùng wget trong Termux.'); });
     }
     document.getElementById('btnDl').addEventListener('click', downloadScript);
     function copyText(id) {
@@ -204,8 +210,7 @@
       navigator.clipboard.writeText(text).then(function() {
         var btn = el.querySelector('.copy-btn');
         if (!btn) return;
-        var old = btn.innerText;
-        btn.innerText = 'Copied!';
+        var old = btn.innerText; btn.innerText = 'Copied!';
         setTimeout(function() { btn.innerText = old; }, 1500);
       });
     }
