@@ -3,237 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOVA — Termux VRSC Miner</title>
-  <meta name="description" content="Copy 1 lệnh, dán Termux, chạy. Kèm cách fix lỗi thường gặp.">
+  <title>NOVA — Multi-coin Termux Miner</title>
+  <meta name="description" content="Đào VRSC, XMR, MoneroOcean, ZEPH trên Termux. Quét CPU/RAM, gợi ý coin, mẹo tăng thu nhập.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #38bdf8;
-      --bg: #0b0d12;
-      --bg2: #12151c;
-      --card: #161a22;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --border: rgba(148, 163, 184, 0.1);
-      --green: #6ee7b7;
-      --radius: 20px;
+      --primary: #38bdf8; --bg: #0b0d12; --bg2: #12151c; --card: #161a22;
+      --text: #f1f5f9; --muted: #94a3b8; --border: rgba(148,163,184,.1);
+      --green: #6ee7b7; --radius: 20px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.7;
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-    .glow {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background:
-        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(56, 189, 248, 0.1), transparent 55%),
-        radial-gradient(ellipse 45% 35% at 90% 60%, rgba(167, 139, 250, 0.07), transparent),
-        radial-gradient(ellipse 40% 30% at 10% 85%, rgba(251, 191, 36, 0.04), transparent);
-    }
-    .wrap {
-      position: relative; z-index: 1;
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 48px 22px 100px;
-    }
+    body { font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; min-height: 100vh; }
+    .glow { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 70% 45% at 50% -10%, rgba(56,189,248,.1), transparent 55%),
+        radial-gradient(ellipse 45% 35% at 90% 60%, rgba(167,139,250,.07), transparent); }
+    .wrap { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 48px 22px 100px; }
     header { text-align: center; margin-bottom: 28px; }
-    .logo-wrap {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 72px; height: 72px;
-      border-radius: 22px;
-      background: linear-gradient(145deg, #38bdf8 0%, #818cf8 55%, #c4b5fd 100%);
-      box-shadow: 0 12px 36px rgba(56, 189, 248, 0.22);
-      margin-bottom: 18px;
-      font-size: 26px; font-weight: 800; color: #0b0d12;
-    }
-    header h1 {
-      font-size: clamp(1.65rem, 4.5vw, 2rem);
-      font-weight: 800;
-      letter-spacing: -0.4px;
-      margin-bottom: 8px;
-      color: #f8fafc;
-    }
-    header .sub {
-      color: var(--muted);
-      font-size: 0.98rem;
-      max-width: 400px;
-      margin: 0 auto 16px;
-    }
+    .logo-wrap { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px;
+      border-radius: 22px; background: linear-gradient(145deg, #38bdf8, #818cf8 55%, #c4b5fd);
+      box-shadow: 0 12px 36px rgba(56,189,248,.22); margin-bottom: 18px; font-size: 26px; font-weight: 800; color: #0b0d12; }
+    header h1 { font-size: clamp(1.6rem, 4.5vw, 2rem); font-weight: 800; margin-bottom: 8px; }
+    header .sub { color: var(--muted); font-size: .98rem; max-width: 420px; margin: 0 auto 16px; }
     .pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-    .pill {
-      font-size: 0.7rem; font-weight: 600;
-      padding: 6px 12px; border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      color: #cbd5e1;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
-    }
-    .card-title {
-      font-size: 1.02rem; font-weight: 650;
-      margin-bottom: 14px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .card-title .icon {
-      width: 28px; height: 28px;
-      border-radius: 10px;
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--primary);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.82rem; font-weight: 700;
-    }
-    .hero-cmd {
-      border-color: rgba(56, 189, 248, 0.25);
-      background: linear-gradient(180deg, #181c26 0%, var(--card) 100%);
-    }
-    .hero-cmd p.lead {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 12px;
-    }
-    .code-box {
-      position: relative;
-      background: #0e1117;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 14px;
-      padding: 14px 12px;
-      padding-right: 70px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      color: var(--green);
-      line-height: 1.55;
-      overflow-x: auto;
-      word-break: break-all;
-      margin-top: 8px;
-    }
-    .copy-btn {
-      position: absolute; top: 8px; right: 8px;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      border: none;
-      color: #0b0d12;
-      padding: 7px 12px;
-      border-radius: 9px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: Inter, sans-serif;
-    }
-    .copy-btn:hover { opacity: 0.92; }
-    .btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 100%;
-      padding: 14px 18px;
-      border-radius: 14px;
-      font-weight: 600; font-size: 0.94rem;
-      text-decoration: none;
-      border: none; cursor: pointer;
-      font-family: Inter, sans-serif;
-      margin-top: 12px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      color: #0b0d12;
-      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
-    }
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--muted);
-    }
-    .steps { list-style: none; }
-    .steps li {
-      display: flex; gap: 12px;
-      margin-bottom: 14px;
-      align-items: flex-start;
-    }
-    .steps .n {
-      min-width: 26px; height: 26px;
-      border-radius: 9px;
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--primary);
-      font-weight: 700; font-size: 0.8rem;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .steps strong { display: block; font-size: 0.92rem; }
-    .steps span { color: var(--muted); font-size: 0.86rem; }
-    .link-inline { color: var(--primary); text-decoration: none; font-size: 0.86rem; }
-    .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .feat {
-      background: var(--bg2);
-      border-radius: 14px;
-      padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-    .feat strong { display: block; color: #7dd3fc; font-size: 0.76rem; margin-bottom: 3px; }
-    .feat span { font-size: 0.84rem; color: var(--muted); }
-    .note {
-      background: rgba(110, 231, 183, 0.06);
-      border: 1px solid rgba(110, 231, 183, 0.14);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 0.85rem;
-      color: #a7f3d0;
-      margin-top: 12px;
-    }
-    .warn {
-      background: rgba(251, 191, 36, 0.06);
-      border-color: rgba(251, 191, 36, 0.14);
-      color: #fde68a;
-    }
-    .warn ul { margin: 6px 0 0 16px; }
-    .fix {
-      background: var(--bg2);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 14px;
-      padding: 14px 14px 12px;
-      margin-bottom: 12px;
-    }
-    .fix:last-child { margin-bottom: 0; }
-    .fix h3 {
-      font-size: 0.88rem;
-      font-weight: 650;
-      color: #fde68a;
-      margin-bottom: 4px;
-    }
-    .fix .why {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    footer {
-      text-align: center;
-      margin-top: 40px;
-      color: #64748b;
-      font-size: 0.76rem;
-    }
+    .pill { font-size: .7rem; font-weight: 600; padding: 6px 12px; border-radius: 999px;
+      background: rgba(255,255,255,.04); color: #cbd5e1; border: 1px solid rgba(255,255,255,.06); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; margin-bottom: 14px; }
+    .card-title { font-size: 1.02rem; font-weight: 650; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    .card-title .icon { width: 28px; height: 28px; border-radius: 10px; background: rgba(56,189,248,.12);
+      color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: .82rem; font-weight: 700; }
+    .hero-cmd { border-color: rgba(56,189,248,.25); background: linear-gradient(180deg, #181c26, var(--card)); }
+    .hero-cmd p.lead { color: var(--muted); font-size: .9rem; margin-bottom: 12px; }
+    .code-box { position: relative; background: #0e1117; border: 1px solid rgba(255,255,255,.06);
+      border-radius: 14px; padding: 14px 12px; padding-right: 70px; font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: var(--green); line-height: 1.55; overflow-x: auto; word-break: break-all; margin-top: 8px; }
+    .copy-btn { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border: none; color: #0b0d12; padding: 7px 12px; border-radius: 9px; font-size: .72rem; font-weight: 700; cursor: pointer; font-family: Inter, sans-serif; }
+    .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 14px 18px;
+      border-radius: 14px; font-weight: 600; font-size: .94rem; text-decoration: none; border: none; cursor: pointer;
+      font-family: Inter, sans-serif; margin-top: 12px; }
+    .btn-primary { background: linear-gradient(135deg, #38bdf8, #818cf8); color: #0b0d12; }
+    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,.08); color: var(--muted); }
+    .coin { background: var(--bg2); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,.04); }
+    .coin strong { color: #e2e8f0; display: block; margin-bottom: 4px; }
+    .coin p { color: var(--muted); font-size: .86rem; margin: 0; }
+    .coin .tag { display: inline-block; font-size: .62rem; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+      background: rgba(56,189,248,.12); color: #7dd3fc; margin-left: 6px; }
+    .coin .tag.hot { background: rgba(251,191,36,.12); color: #fde68a; }
+    .tip { background: var(--bg2); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; font-size: .88rem; }
+    .tip b { color: #7dd3fc; }
+    .note { background: rgba(110,231,183,.06); border: 1px solid rgba(110,231,183,.14); border-radius: 14px;
+      padding: 12px 14px; font-size: .85rem; color: #a7f3d0; margin-top: 12px; }
+    .warn { background: rgba(251,191,36,.06); border-color: rgba(251,191,36,.14); color: #fde68a; }
+    .warn ul, .note ul { margin: 6px 0 0 16px; }
+    .fix { background: var(--bg2); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .fix h3 { font-size: .88rem; font-weight: 650; color: #fde68a; margin-bottom: 4px; }
+    .fix .why { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+    footer { text-align: center; margin-top: 40px; color: #64748b; font-size: .76rem; }
     footer a { color: var(--primary); text-decoration: none; }
-    .toast {
-      position: fixed; bottom: 28px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--card);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      color: #7dd3fc;
-      padding: 11px 22px;
-      border-radius: 12px;
-      font-size: 0.84rem; font-weight: 600;
-      opacity: 0; transition: all 0.35s ease; z-index: 99;
-      pointer-events: none;
-    }
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--card); border: 1px solid rgba(56,189,248,.35); color: #7dd3fc;
+      padding: 11px 22px; border-radius: 12px; font-size: .84rem; font-weight: 600; opacity: 0;
+      transition: all .35s ease; z-index: 99; pointer-events: none; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    @media (max-width: 520px) {
-      .feat-grid { grid-template-columns: 1fr; }
-      .wrap { padding-top: 36px; }
-    }
+    .link-inline { color: var(--primary); text-decoration: none; font-size: .86rem; }
   </style>
 </head>
 <body>
@@ -242,165 +75,95 @@
     <header>
       <div class="logo-wrap">N</div>
       <h1>NOVA Miner</h1>
-      <p class="sub">Copy 1 lệnh → dán Termux → Enter. Xong.</p>
+      <p class="sub">VRSC · XMR · MoneroOcean · ZEPH — một script Termux, quét CPU/RAM, gợi ý coin</p>
       <div class="pills">
-        <span class="pill">1 lệnh</span>
-        <span class="pill">Pool / Hybrid / Solo</span>
-        <span class="pill">Fix lỗi sẵn</span>
+        <span class="pill">Multi-coin</span>
+        <span class="pill">Quét CPU + RAM</span>
+        <span class="pill">Gợi ý thông minh</span>
       </div>
     </header>
 
     <section class="card hero-cmd">
       <div class="card-title"><span class="icon">⚡</span> Chạy ngay</div>
-      <p class="lead">Termux đã ổn → dán lệnh này → Enter.</p>
-      <div class="code-box" id="cmd-main">pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh">Copy</button></div>
-      <div class="note">Lần sau chỉ cần: <code style="color:#fff">bash $HOME/verus.sh</code></div>
+      <p class="lead">Termux ổn → copy → dán → Enter.</p>
+      <div class="code-box">pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg update -y && pkg upgrade -y && pkg install -y wget openssl libcurl libjansson && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh">Copy</button></div>
+      <div class="note">Lần sau: <code style="color:#fff">bash $HOME/verus.sh</code></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span class="icon">◇</span> Coin hỗ trợ</div>
+      <div class="coin"><strong>1 · Verus (VRSC) <span class="tag">Khuyên phone</span></strong>
+        <p>VerusHash · ccminer · Pool/Hybrid/Solo · ổn định nhất trên Android.</p></div>
+      <div class="coin"><strong>2 · Monero (XMR) <span class="tag hot">Nóng máy</span></strong>
+        <p>RandomX · xmrig · SupportXMR / Nanopool · hashrate phone thấp.</p></div>
+      <div class="coin"><strong>3 · MoneroOcean <span class="tag">Auto</span></strong>
+        <p>Tự đổi coin RandomX theo lời · payout về XMR · cùng xmrig.</p></div>
+      <div class="coin"><strong>4 · Zephyr (ZEPH)</strong>
+        <p>RandomX fork · HeroMiners · thử nghiệm.</p></div>
+      <div class="note">Script quét <b>CPU + RAM</b> rồi gợi ý coin phù hợp trước khi bạn chọn.</div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span class="icon">★</span> Gợi ý theo máy</div>
+      <div class="tip"><b>RAM < 2.5 GB hoặc ≤ 4 core</b> → chỉ Verus Pool, thread = max−1.</div>
+      <div class="tip"><b>RAM ≥ 2.5 GB · 4–6 core</b> → Verus chính; XMR/MO chỉ thử.</div>
+      <div class="tip"><b>RAM ≥ 3.5 GB · ≥ 6 core</b> → có thể thử MoneroOcean; VRSC vẫn dễ chạy hơn.</div>
+      <div class="tip"><b>Cloud phone cắt core</b> → tin số “online”, không ép thread 8 khi chỉ thấy 4.</div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><span class="icon">$</span> Mẹo tăng thu nhập (thật tế)</div>
+      <div class="tip"><b>1. Nhiều máy > một máy mạnh</b> — 10 phone 1 MH/s ổn định > 1 máy hay offline.</div>
+      <div class="tip"><b>2. Uptime</b> — wake-lock + tắt tối ưu pin Termux + cắm sạc. Offline = mất share.</div>
+      <div class="tip"><b>3. Pool gần</b> — LuckPool AP (VN/SEA), EU/NA theo vùng. Script tự gợi ý theo IP.</div>
+      <div class="tip"><b>4. Thread = max−1</b> — full core dễ throttle → hashrate trung bình thấp hơn.</div>
+      <div class="tip"><b>5. Verus Pool, không Hybrid</b> trên phone — Hybrid cắt share đều.</div>
+      <div class="tip"><b>6. Min payout thấp</b> — LuckPool 0.0001 VRSC; đừng để balance “nằm” quá lâu nếu cần rút.</div>
+      <div class="tip"><b>7. Điện / cloud rẻ</b> — phone chỉ “lời” khi chi phí biên ≈ 0.</div>
+      <div class="tip"><b>8. Đừng kỳ vọng giàu từ 1 MH/s</b> — vài phần nghìn VRSC/ngày; farm hoặc PC mới ra số.</div>
+      <div class="note warn" style="margin-top:12px">Phone mining = học + thử. Muốn có số rõ: nhiều hashrate hoặc máy để bàn.</div>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">1</span> 3 bước</div>
-      <ul class="steps">
-        <li>
-          <span class="n">1</span>
-          <div>
-            <strong>Cài Termux (F-Droid)</strong>
-            <span>Không dùng bản CH Play.</span><br>
-            <a class="link-inline" href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener">→ Tải Termux</a>
-          </div>
-        </li>
-        <li>
-          <span class="n">2</span>
-          <div>
-            <strong>Copy lệnh · dán · Enter</strong>
-            <span>Nếu báo lỗi curl/pkg → xem mục Sửa lỗi bên dưới trước.</span>
-          </div>
-        </li>
-        <li>
-          <span class="n">3</span>
-          <div>
-            <strong>Menu: 1 cấu hình → 2 đào</strong>
-            <span>Ví bắt đầu bằng R · chọn Pool.</span>
-          </div>
-        </li>
-      </ul>
-    </section>
-
-    <!-- SỬA LỖI -->
-    <section class="card">
-      <div class="card-title"><span class="icon">🔧</span> Sửa lỗi thường gặp</div>
-      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:14px">Copy lệnh tương ứng → dán Termux → Enter. Làm <b style="color:#fff">theo thứ tự</b> nếu lỗi chồng.</p>
-
-      <div class="fix">
-        <h3>1. CANNOT LINK … SSL_set_quic / curl hỏng / pkg fail</h3>
-        <p class="why">Thư viện OpenSSL và libcurl lệch phiên bản. pkg dùng curl nên cũng chết.</p>
-        <div class="code-box">apt update && apt full-upgrade -y<button type="button" class="copy-btn" data-copy="apt update && apt full-upgrade -y">Copy</button></div>
-        <div class="code-box">pkg reinstall -y openssl libcurl curl wget<button type="button" class="copy-btn" data-copy="pkg reinstall -y openssl libcurl curl wget">Copy</button></div>
-      </div>
-
-      <div class="fix">
-        <h3>2. No mirror / termux-change-repo</h3>
-        <p class="why">Chưa chọn kho mirror → apt/pkg không tải được.</p>
-        <div class="code-box">termux-change-repo<button type="button" class="copy-btn" data-copy="termux-change-repo">Copy</button></div>
-        <p class="why" style="margin-top:8px">Chọn Main → mirror Asia / Cloudflare → OK, rồi chạy lại lệnh ở mục 1.</p>
-      </div>
-
-      <div class="fix">
-        <h3>3. pkg: command not found</h3>
-        <p class="why">Môi trường hỏng hoặc dán lệnh bị lỗi. Dùng apt:</p>
-        <div class="code-box">apt update && apt full-upgrade -y && apt install -y wget curl openssl libcurl libjansson<button type="button" class="copy-btn" data-copy="apt update && apt full-upgrade -y && apt install -y wget curl openssl libcurl libjansson">Copy</button></div>
-      </div>
-
-      <div class="fix">
-        <h3>4. Dán lệnh ra [200~ … ~</h3>
-        <p class="why">Bracketed paste. Xóa dòng lỗi, dán lại từng lệnh ngắn, hoặc:</p>
-        <div class="code-box">printf '\e[?2004l'<button type="button" class="copy-btn" data-copy="printf '\e[?2004l'">Copy</button></div>
-      </div>
-
-      <div class="fix">
-        <h3>5. CANNOT LINK ./ccminer (miner không chạy)</h3>
-        <p class="why">Binary cũ không khớp lib. Sửa lib rồi biên dịch lại trong script.</p>
-        <div class="code-box">pkg reinstall -y openssl libcurl libjansson && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg reinstall -y openssl libcurl libjansson && bash $HOME/verus.sh">Copy</button></div>
-        <p class="why" style="margin-top:8px">Trong menu NOVA bấm <b style="color:#fff">4</b> → tự tải / biên dịch miner.</p>
-      </div>
-
-      <div class="fix">
-        <h3>6. wget / network fail khi tải script</h3>
-        <div class="code-box">pkg install -y wget curl && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="pkg install -y wget curl && wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && chmod +x $HOME/verus.sh && bash $HOME/verus.sh">Copy</button></div>
-      </div>
-
-      <div class="fix">
-        <h3>7. Rớt pool / timeout khi đang đào</h3>
-        <p class="why">Mạng yếu hoặc pool xa. Trong menu: cấu hình lại → chọn LuckPool AP · giảm thread.</p>
-        <div class="code-box">bash $HOME/verus.sh<button type="button" class="copy-btn" data-copy="bash $HOME/verus.sh">Copy</button></div>
-      </div>
-
-      <div class="fix">
-        <h3>8. Reset sạch Termux (cùng cực)</h3>
-        <p class="why">Xóa data app Termux trong Cài đặt Android → mở lại → chọn mirror → full-upgrade → chạy lệnh chính.</p>
-        <div class="code-box">termux-change-repo<button type="button" class="copy-btn" data-copy="termux-change-repo">Copy</button></div>
-        <div class="code-box">apt update && apt full-upgrade -y<button type="button" class="copy-btn" data-copy="apt update && apt full-upgrade -y">Copy</button></div>
-      </div>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:10px">1) Termux từ <a class="link-inline" href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener">F-Droid</a> · 2) Copy lệnh trên · 3) Menu 1 cấu hình → 2 đào</p>
     </section>
 
     <section class="card">
-      <div class="card-title"><span class="icon">✦</span> Trong script</div>
-      <div class="feat-grid">
-        <div class="feat"><strong>Sửa lib</strong><span>Menu 4</span></div>
-        <div class="feat"><strong>Quét core</strong><span>Gợi ý thread</span></div>
-        <div class="feat"><strong>Failover</strong><span>Đổi pool khi rớt</span></div>
-        <div class="feat"><strong>3 chế độ</strong><span>Pool / Hybrid / Solo</span></div>
+      <div class="card-title"><span class="icon">🔧</span> Sửa lỗi nhanh</div>
+      <div class="fix">
+        <h3>curl / pkg hỏng (CANNOT LINK SSL)</h3>
+        <div class="code-box">apt update && apt full-upgrade -y<button class="copy-btn" data-copy="apt update && apt full-upgrade -y">Copy</button></div>
+        <div class="code-box">pkg reinstall -y openssl libcurl curl wget<button class="copy-btn" data-copy="pkg reinstall -y openssl libcurl curl wget">Copy</button></div>
       </div>
-    </section>
-
-    <section class="card">
-      <div class="card-title"><span class="icon">!</span> Lưu ý</div>
-      <div class="note warn" style="margin-top:0">
-        <ul>
-          <li>Ví bắt đầu bằng <strong>R</strong></li>
-          <li>Phone: chọn <strong>Pool (1)</strong></li>
-          <li>Dán lệnh: tránh ký tự lạ <code>[200~</code></li>
-          <li>Cắm sạc, để máy mát</li>
-        </ul>
+      <div class="fix">
+        <h3>No mirror</h3>
+        <div class="code-box">termux-change-repo<button class="copy-btn" data-copy="termux-change-repo">Copy</button></div>
+      </div>
+      <div class="fix">
+        <h3>Cập nhật script</h3>
+        <div class="code-box">wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && bash $HOME/verus.sh<button class="copy-btn" data-copy="wget -O $HOME/verus.sh https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh && bash $HOME/verus.sh">Copy</button></div>
       </div>
     </section>
 
     <section class="card">
       <div class="card-title"><span class="icon">↓</span> Tải file</div>
-      <button type="button" class="btn btn-primary" id="btnDl" style="margin-top:4px">Tải verus.sh</button>
+      <button type="button" class="btn btn-primary" id="btnDl">Tải verus.sh</button>
       <a class="btn btn-ghost" href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a>
     </section>
 
     <footer>
-      <p>NOVA · copy · fix · mine</p>
+      <p>NOVA · multi-coin · Termux</p>
       <p style="margin-top:6px"><a href="https://github.com/Toanle64/WebMining" target="_blank" rel="noopener">GitHub</a></p>
     </footer>
   </div>
   <div class="toast" id="toast">Đã copy</div>
   <script>
-    function toast(msg) {
-      var t = document.getElementById('toast');
-      t.textContent = msg || 'Đã copy';
-      t.classList.add('show');
-      setTimeout(function() { t.classList.remove('show'); }, 1800);
-    }
-    document.querySelectorAll('[data-copy]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        navigator.clipboard.writeText(btn.getAttribute('data-copy')).then(function() {
-          toast('Đã copy — dán vào Termux');
-        });
-      });
-    });
-    document.getElementById('btnDl').addEventListener('click', function() {
-      fetch('https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh')
-        .then(function(r) { return r.text(); })
-        .then(function(text) {
-          var a = document.createElement('a');
-          a.href = URL.createObjectURL(new Blob([text], { type: 'application/x-sh' }));
-          a.download = 'verus.sh';
-          a.click();
-          toast('Đã tải verus.sh');
-        });
-    });
+    function toast(m){var t=document.getElementById('toast');t.textContent=m||'Đã copy';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1800)}
+    document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function(){toast('Đã copy — dán Termux')})})});
+    document.getElementById('btnDl').addEventListener('click',function(){
+      fetch('https://raw.githubusercontent.com/Toanle64/WebMining/main/verus.sh').then(function(r){return r.text()}).then(function(t){
+        var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'application/x-sh'}));a.download='verus.sh';a.click();toast('Đã tải verus.sh')})});
   </script>
 </body>
 </html>
