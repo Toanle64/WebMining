@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # NOVA — multi-coin Termux miner
-# VRSC · XMR · MoneroOcean · ZEPH (RandomX)
+# VRSC · XMR · MoneroOcean · ZEPH
 
 R='\033[0;31m'; G='\033[0;32m'; Y='\033[1;33m'
 C='\033[0;36m'; W='\033[1;37m'; D='\033[0;90m'
@@ -10,6 +10,7 @@ DIR="$HOME/nova"
 CFG="$DIR/config.json"
 META="$DIR/meta.env"
 XMRCFG="$DIR/xmrig.json"
+WID="$DIR/worker.id"
 mkdir -p "$DIR"
 cd "$DIR" || exit 1
 
@@ -30,7 +31,24 @@ EOF
 }
 line() { echo -e "  ${D}────────────────────────────────────${N}"; }
 
-# CPU + RAM
+# Worker riêng mỗi máy: phone001 … phone999 (random, lưu local)
+# Máy khác nhau → tên khác → pool hiện nhiều worker
+ensure_worker() {
+  if [ -f "$WID" ]; then
+    local w; w=$(cat "$WID" | tr -d '\r\n' | tr -cd 'A-Za-z0-9._-')
+    if [ -n "$w" ]; then echo "$w"; return; fi
+  fi
+  local n=$((RANDOM % 900 + 1))
+  local w
+  w=$(printf 'phone%03d' "$n")
+  echo "$w" > "$WID"
+  echo "$w"
+}
+
+save_worker() {
+  echo "$1" > "$WID"
+}
+
 scan_hw() {
   local onl conf info max=1 sys=0
   onl=$(nproc 2>/dev/null || true)
@@ -41,23 +59,16 @@ scan_hw() {
     case "$v" in ''|*[!0-9]*) ;; *) [ "$v" -gt "$max" ] && max=$v ;; esac
   done
   case "$onl" in ''|*[!0-9]*) HW_CORES=$max ;; *) HW_CORES=$onl ;; esac
-  HW_TOTAL=$max
-  # RAM MB
-  local kb
-  kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
+  local kb; kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
   HW_RAM_MB=$((kb / 1024))
   [ "$HW_RAM_MB" -lt 1 ] && HW_RAM_MB=0
   if [ "$HW_CORES" -gt 1 ] 2>/dev/null; then HW_THREADS=$((HW_CORES - 1)); else HW_THREADS=1; fi
-  # Gợi ý coin: RandomX cần ~2GB+; phone yếu → VRSC
   if [ "$HW_RAM_MB" -ge 3500 ] && [ "$HW_CORES" -ge 6 ]; then
-    HW_REC="XMR/MO"
-    HW_REC_MSG="RAM và core khá → có thể thử MoneroOcean / XMR; VRSC vẫn ổn định hơn trên phone."
+    HW_REC="XMR/MO"; HW_REC_MSG="RAM/core khá → có thể thử MO/XMR; VRSC vẫn ổn trên phone."
   elif [ "$HW_RAM_MB" -ge 2500 ] && [ "$HW_CORES" -ge 4 ]; then
-    HW_REC="VRSC"
-    HW_REC_MSG="Phone tầm trung → ưu tiên Verus (Pool). XMR chỉ thử nghiệm."
+    HW_REC="VRSC"; HW_REC_MSG="Ưu tiên Verus Pool. XMR chỉ thử."
   else
-    HW_REC="VRSC"
-    HW_REC_MSG="RAM/core hạn chế → chỉ nên Verus Pool, thread = max−1. Tránh RandomX (nóng + chậm)."
+    HW_REC="VRSC"; HW_REC_MSG="Máy yếu → chỉ Verus Pool, thread max−1."
   fi
 }
 
@@ -67,10 +78,9 @@ detect_region() {
   local j
   j=$(curl -sL --max-time 8 "https://ipapi.co/json/" 2>/dev/null) || j=""
   [ -z "$j" ] && j=$(curl -sL --max-time 8 "https://ipinfo.io/json" 2>/dev/null) || true
-  if [ -n "$j" ]; then
-    if command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then
-      local PY; PY=$(command -v python3 || command -v python)
-      eval "$($PY -c "
+  if [ -n "$j" ] && command -v python3 >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then
+    local PY; PY=$(command -v python3 || command -v python)
+    eval "$($PY -c "
 import sys,json
 try:
  d=json.load(sys.stdin)
@@ -80,7 +90,6 @@ try:
 except Exception:
  print('GEO_CC=\"?\";GEO_CITY=\"\"')
 " <<< "$j" 2>/dev/null)"
-    fi
   fi
   case "$GEO_CC" in
     US|CA|MX|BR|AR) GEO_REGION_KEY="NA"; GEO_DEFAULT_NUM=2 ;;
@@ -115,7 +124,7 @@ compile_ccminer() {
   git clone --depth 1 https://github.com/Darktron/ccminer.git "$DIR/src" 2>/dev/null || return 1
   cd "$DIR/src" || return 1
   chmod +x build.sh 2>/dev/null
-  CXX=clang++ CC=clang ./build.sh 2>&1 | tail -10
+  CXX=clang++ CC=clang ./build.sh 2>&1 | tail -8
   if [ -f "$DIR/src/ccminer" ]; then
     cp "$DIR/src/ccminer" "$DIR/ccminer"; chmod +x "$DIR/ccminer"
     cd "$DIR" || true; test_ccminer && return 0
@@ -157,12 +166,12 @@ install_xmrig() {
     chmod +x "$DIR/xmrig" 2>/dev/null
     echo -e "  ${G}✓${N} xmrig pkg"; return 0
   fi
-  echo -e "  ${C}▸${N} Biên dịch xmrig (~5–20 phút)..."
+  echo -e "  ${C}▸${N} Biên dịch xmrig..."
   rm -rf "$DIR/xmrig-src"
   git clone --depth 1 https://github.com/xmrig/xmrig.git "$DIR/xmrig-src" 2>/dev/null || return 1
   mkdir -p "$DIR/xmrig-src/build" && cd "$DIR/xmrig-src/build" || return 1
-  cmake .. -DWITH_HWLOC=OFF -DWITH_OPENCL=OFF -DWITH_CUDA=OFF 2>&1 | tail -4
-  make -j"$(nproc 2>/dev/null || echo 2)" 2>&1 | tail -8
+  cmake .. -DWITH_HWLOC=OFF -DWITH_OPENCL=OFF -DWITH_CUDA=OFF 2>&1 | tail -3
+  make -j"$(nproc 2>/dev/null || echo 2)" 2>&1 | tail -6
   if [ -f "$DIR/xmrig-src/build/xmrig" ]; then
     cp "$DIR/xmrig-src/build/xmrig" "$DIR/xmrig"; chmod +x "$DIR/xmrig"
     cd "$DIR" || true; echo -e "  ${G}✓${N} xmrig OK"; return 0
@@ -192,24 +201,51 @@ write_xmrig_cfg() {
 EOL
 }
 
+ask_worker() {
+  # In: optional old name. Out: WORKER set, saved to worker.id
+  local DEF
+  DEF=$(ensure_worker)
+  echo -e "  ${C}Worker${N} ${D}(tên máy trên pool — mỗi cloud nên khác)${N}"
+  echo -e "  ${D}Enter = giữ ${DEF} · gõ tên mới · gõ new = tạo phoneXXX mới${N}"
+  echo -ne "  Worker: "
+  read -r W_IN
+  if [ -z "$W_IN" ]; then
+    WORKER="$DEF"
+  elif [ "$W_IN" = "new" ] || [ "$W_IN" = "NEW" ]; then
+    rm -f "$WID"
+    WORKER=$(ensure_worker)
+    echo -e "  ${G}→ Worker mới: ${WORKER}${N}"
+  else
+    WORKER=$(echo "$W_IN" | tr -cd 'A-Za-z0-9._-')
+    [ -z "$WORKER" ] && WORKER="$DEF"
+    save_worker "$WORKER"
+  fi
+  echo -e "  ${G}✓ Worker = ${W}${WORKER}${N}"
+}
+
 do_config() {
   banner
   echo -e "  ${W}${B}CẤU HÌNH NOVA${N}"
   line
+  if [ -f "$META" ]; then
+    echo -e "  ${Y}Đã có cấu hình cũ — làm tiếp sẽ GHI ĐÈ toàn bộ.${N}"
+    source "$META" 2>/dev/null || true
+    echo -e "  ${D}Cũ: ${COIN:-?} · ${WORKER:-?} · ví ${WALLET:0:12}...${N}"
+    echo
+  fi
   detect_region
   echo
   scan_hw
-  echo -e "  ${C}▸${N} CPU online: ${W}${HW_CORES}${N}  RAM: ${W}${HW_RAM_MB} MB${N}"
-  echo -e "  ${C}▸${N} Thread mặc định: ${W}${HW_THREADS}${N} ${D}(max−1)${N}"
+  echo -e "  ${C}▸${N} CPU: ${W}${HW_CORES}${N}  RAM: ${W}${HW_RAM_MB} MB${N}  thread: ${W}${HW_THREADS}${N}"
   echo -e "  ${G}★ Gợi ý: ${W}${HW_REC}${N}"
   echo -e "  ${D}${HW_REC_MSG}${N}"
   echo
 
   echo -e "  ${C}CHỌN COIN${N}"
-  echo -e "     ${W}1${N}  Verus (VRSC)      ${D}VerusHash · khuyến nghị phone${N}"
-  echo -e "     ${W}2${N}  Monero (XMR)      ${D}RandomX · nóng, lời thấp${N}"
-  echo -e "     ${W}3${N}  MoneroOcean       ${D}auto RandomX coins · payout XMR${N}"
-  echo -e "     ${W}4${N}  Zephyr (ZEPH)     ${D}RandomX fork · xmrig${N}"
+  echo -e "     ${W}1${N}  Verus (VRSC)"
+  echo -e "     ${W}2${N}  Monero (XMR)"
+  echo -e "     ${W}3${N}  MoneroOcean"
+  echo -e "     ${W}4${N}  Zephyr (ZEPH)"
   local CDEF=1
   [ "$HW_REC" = "XMR/MO" ] && CDEF=3
   echo -ne "     Chọn ${D}[${CDEF}]${N}: "
@@ -232,7 +268,7 @@ config_vrsc() {
     [[ "$WALLET" == R* && ${#WALLET} -gt 20 ]] && break
     echo -e "  ${R}✗ Cần R...${N}"
   done
-  echo -ne "  Worker ${D}[phone1]${N}: "; read -r WORKER; WORKER=${WORKER:-phone1}
+  ask_worker
   echo -ne "  Thread ${D}[Enter=${HW_THREADS}]${N}: "; read -r THREADS; THREADS=${THREADS:-$HW_THREADS}
 
   PRIMARY=""; PNAME=""
@@ -247,8 +283,8 @@ config_vrsc() {
 EOL
       ;;
     3)
-      echo -e "  Solo: 1 SG  2 AP  3 US  4 DE"
-      echo -ne "  [1]: "; read -r REG; REG=${REG:-1}
+      echo -e "  Solo: 1 SG  2 AP  3 US  4 DE [1]"
+      echo -ne "  "; read -r REG; REG=${REG:-1}
       case $REG in 2) PRIMARY="stratum+tcp://ap.vipor.net:5045" ;; 3) PRIMARY="stratum+tcp://us.vipor.net:5045" ;; 4) PRIMARY="stratum+tcp://de.vipor.net:5045" ;; *) PRIMARY="stratum+tcp://sg.vipor.net:5045" ;; esac
       PNAME="VRSC Solo"
       cat > "$CFG" << EOL
@@ -288,44 +324,29 @@ CORES=$HW_CORES
 RAM=$HW_RAM_MB
 GEO_CC=$GEO_CC
 EOL
-  echo -e "  ${G}✓ VRSC · $PNAME · t=$THREADS${N}"
+  echo -e "  ${G}✓ ĐÃ LƯU VRSC · worker=${WORKER} · t=$THREADS${N}"
   echo -ne "  Enter..."; read -r _
 }
 
-# kind: XMR | MO | ZEPH
 config_rx() {
   local KIND="$1"
   echo
-  echo -e "  ${Y}⚠ RandomX trên phone: nóng, hashrate thấp, lời rất nhỏ.${N}"
-  case $KIND in
-    MO) echo -e "  ${D}MoneroOcean: auto đổi coin RandomX, trả về XMR${N}" ;;
-    ZEPH) echo -e "  ${D}Zephyr: ví ZEPH (cùng format XMR-style)${N}" ;;
-  esac
-  echo
+  echo -e "  ${Y}⚠ RandomX: nóng, lời thấp trên phone.${N}"
   while true; do
     echo -ne "  Ví (4... hoặc 8...): "; read -r WALLET
     if [[ "$WALLET" == 4* || "$WALLET" == 8* ]] && [ ${#WALLET} -gt 90 ]; then break; fi
     echo -e "  ${R}✗ Ví không hợp lệ${N}"
   done
-  echo -ne "  Worker ${D}[phone1]${N}: "; read -r WORKER; WORKER=${WORKER:-phone1}
+  ask_worker
   echo -ne "  Thread ${D}[Enter=${HW_THREADS}]${N}: "; read -r THREADS; THREADS=${THREADS:-$HW_THREADS}
 
   local URL ALGO="rx/0" PNAME COINCODE
   case $KIND in
-    MO)
-      URL="gulf.moneroocean.stream:10128"
-      PNAME="MoneroOcean"
-      COINCODE="MO"
-      ALGO=null
-      ;;
-    ZEPH)
-      URL="zephyr.herominers.com:1123"
-      PNAME="Zephyr HeroMiners"
-      COINCODE="ZEPH"
-      ;;
+    MO) URL="gulf.moneroocean.stream:10128"; PNAME="MoneroOcean"; COINCODE="MO"; ALGO=null ;;
+    ZEPH) URL="zephyr.herominers.com:1123"; PNAME="Zephyr"; COINCODE="ZEPH" ;;
     *)
-      echo -e "  Pool XMR: 1 SupportXMR  2 Nanopool Asia  3 Nanopool EU"
-      echo -ne "  [1]: "; read -r XP; XP=${XP:-1}
+      echo -e "  Pool: 1 SupportXMR  2 Nanopool Asia  3 Nanopool EU [1]"
+      echo -ne "  "; read -r XP; XP=${XP:-1}
       case $XP in
         2) URL="xmr-asia1.nanopool.org:14444"; PNAME="Nanopool Asia" ;;
         3) URL="xmr-eu1.nanopool.org:14444"; PNAME="Nanopool EU" ;;
@@ -369,7 +390,7 @@ CORES=$HW_CORES
 RAM=$HW_RAM_MB
 GEO_CC=$GEO_CC
 EOL
-  echo -e "  ${G}✓ $COINCODE · $PNAME · t=$THREADS${N}"
+  echo -e "  ${G}✓ ĐÃ LƯU $COINCODE · worker=${WORKER} · t=$THREADS${N}"
   echo -ne "  Enter..."; read -r _
 }
 
@@ -377,7 +398,7 @@ show_stats() {
   banner
   [ ! -f "$META" ] && { echo -e "  ${Y}Chưa cấu hình.${N}"; echo -ne "  Enter..."; read -r _; return; }
   source "$META"
-  echo -e "  ${W}${COIN}${N} · ${PNAME} · CPU ${CORES}c · RAM ${RAM}MB"
+  echo -e "  ${W}${COIN}${N} · worker ${WORKER} · ${PNAME}"
   if [ "${ENGINE:-ccminer}" = "ccminer" ]; then
     JSON=$(curl -sL --max-time 12 "https://luckpool.net/verus/miner/${WALLET}" 2>/dev/null)
     if echo "$JSON" | grep -q hashrate; then
@@ -385,9 +406,7 @@ show_stats() {
       [ -n "$PY" ] && echo "$JSON" | $PY -c "import sys,json;d=json.load(sys.stdin);print('HR',d.get('hashrateString'),'| Bal',d.get('balance'),'| Paid',d.get('paid'))"
     else echo -e "  ${Y}Chưa có data LuckPool${N}"; fi
   else
-    echo -e "  ${D}Dashboard pool:${N}"
-    echo -e "  https://supportxmr.com/  |  https://moneroocean.stream/"
-    echo -e "  https://xmr.nanopool.org/account/${WALLET}"
+    echo -e "  https://moneroocean.stream/  (nhập ví)"
   fi
   echo -ne "  Enter..."; read -r _
 }
@@ -397,10 +416,9 @@ start_mine() {
   [ ! -f "$META" ] && { echo -e "  ${Y}Chưa config${N}"; sleep 1; do_config; }
   source "$META"
   local T=${THREADS:-2}
-
   if [ "${ENGINE:-ccminer}" = "xmrig" ]; then
     install_xmrig 0 || { echo -ne "  Enter..."; read -r _; return; }
-    echo -e "${C}│${N} ${W}NOVA ${COIN}${N} · ${PNAME} · t=$T  ${D}Ctrl+C dừng${N}"
+    echo -e "${C}│${N} ${W}NOVA ${COIN}${N} · ${WORKER} · ${PNAME} · t=$T"
     cd "$DIR" || exit 1
     FAIL=0
     while true; do
@@ -417,7 +435,7 @@ start_mine() {
   else
     install_ccminer 0 || { echo -ne "  Enter..."; read -r _; return; }
     test_ccminer; [ $? = 2 ] && { echo -e "  ${R}Lỗi lib — menu 4${N}"; echo -ne "  Enter..."; read -r _; return; }
-    echo -e "${C}│${N} ${W}NOVA VRSC${N} · ${PNAME} · t=$T  ${D}Ctrl+C dừng${N}"
+    echo -e "${C}│${N} ${W}NOVA VRSC${N} · ${WORKER} · ${PNAME} · t=$T"
     cd "$DIR" || exit 1
     FAIL=0
     while true; do
@@ -436,20 +454,36 @@ start_mine() {
   echo -ne "  Enter..."; read -r _
 }
 
+reset_config() {
+  banner
+  echo -e "  ${Y}Xóa cấu hình máy này (worker + meta + json)?${N}"
+  echo -ne "  Gõ yes để xóa: "
+  read -r y
+  if [ "$y" = "yes" ]; then
+    rm -f "$META" "$CFG" "$XMRCFG" "$WID"
+    echo -e "  ${G}✓ Đã xóa. Vào menu 1 cấu hình lại.${N}"
+  else
+    echo -e "  ${D}Hủy.${N}"
+  fi
+  echo -ne "  Enter..."; read -r _
+}
+
 main_menu() {
   while true; do
     banner
     scan_hw
-    echo -e "  ${D}${HW_CORES} core · ${HW_RAM_MB} MB RAM · gợi ý: ${HW_REC}${N}"
+    local WW; WW=$(ensure_worker 2>/dev/null || echo "?")
+    echo -e "  ${D}${HW_CORES}c · ${HW_RAM_MB}MB · worker máy này: ${WW}${N}"
     [ -f "$META" ] && source "$META" && echo -e "  ${D}${COIN:-?} · ${PNAME:-?} · t=${THREADS}${N}"
     line
     echo
     echo -e "  ${W}${B}MENU${N}"
-    echo -e "     ${C}1${N}  Cấu hình (coin + pool)"
+    echo -e "     ${C}1${N}  Cấu hình (ghi đè được)"
     echo -e "     ${C}2${N}  Bắt đầu đào"
     echo -e "     ${C}3${N}  Thống kê"
     echo -e "     ${C}4${N}  Sửa lib + miner"
-    echo -e "     ${C}5${N}  Thoát"
+    echo -e "     ${C}5${N}  Xóa cấu hình máy này"
+    echo -e "     ${C}6${N}  Thoát"
     echo
     echo -ne "  Chọn ${D}[2]${N}: "
     read -r CH; CH=${CH:-2}
@@ -463,7 +497,8 @@ main_menu() {
         if [ "${ENGINE:-ccminer}" = "xmrig" ]; then install_xmrig 1; else install_ccminer 1; fi
         echo -ne "  Enter..."; read -r _
         ;;
-      5) exit 0 ;;
+      5) reset_config ;;
+      6) exit 0 ;;
     esac
   done
 }
